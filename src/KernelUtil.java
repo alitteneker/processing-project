@@ -1,4 +1,4 @@
-
+import java.util.Arrays;
 public class KernelUtil {
     public static float[] buildBoxBlur(int N) {
         if( N%2 != 1 )
@@ -36,9 +36,11 @@ public class KernelUtil {
         return ret;
     }
     
+    // must have range -255 to 255
     public static float[] buildHighPass() {
         float[] ret = { -1, -1, -1, -1, 8, -1, -1, -1, -1 };
-        ret = Util.multiply(1f/9f, ret);
+        ret = Util.multiply(1f/8f, ret);
+        System.out.println(Arrays.toString(ret));
         return ret;
     }
 }

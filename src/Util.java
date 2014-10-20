@@ -8,6 +8,27 @@ public class Util {
             ret += a[i] * b[i];
         return ret;
     }
+    // Modification of the normal dotProduct to support multiple components simultaneously.
+    public static float[] dotProduct(float[][] a, float[] b) {
+        int size = Math.min(a.length, b.length), components = a[0].length;
+        if( size == 0 || components == 0 )
+            return null;
+        float[] ret = new float[components];
+        for( int i = 0; i < size; ++i )
+            for( int j = 0; j < components; ++j )
+                ret[j] += a[i][j] * b[i];
+        return ret;
+    }
+    // The previous method applies works on a per row entry, this works on a per column entry
+    public static float[] dotProduct(float[] b, float[][] a) {
+        if( a.length == 0 || a[0].length == 0 )
+            return null;
+        float[] ret = new float[a.length];
+        for( int i = 0; i < a.length; ++i )
+            for( int j = 0; j < a[i].length; ++j )
+                ret[i] += a[i][j] * b[j];
+        return ret;
+    }
     public static float[] average(float[][] in) {
         float[] ret = new float[in.length];
         for( int i = 0; i < in.length; ++i )
@@ -31,19 +52,6 @@ public class Util {
             in[i] = multiply(scale, in[i]);
         return in;
     }
-    // Modification of the normal dotProduct to support multiple components simultaneously.
-    public static float[] dotProduct(float[][] a, float[] b) {
-        int size = Math.min(a.length, b.length), components = a[0].length;
-        if( size == 0 || components == 0 )
-            return null;
-        float[] ret = new float[components];
-        for( int i = 0; i < size; ++i ) {
-            for( int j = 0; j < components; ++j ) {
-                ret[j] += a[i][j] * b[i];
-            }
-        }
-        return ret;
-    }
     public static int getPixelIndex(int x, int y, int width) {
         return x + ( y * width );
     }
@@ -51,11 +59,14 @@ public class Util {
     public static int maxMin(int val, int min, int max) {
         return ( val > max ) ? max : ( ( val < min ) ? min : val );
     }
-    public static double maxMin(double val, double min, double max) {
-        return ( val > max ) ? max : ( ( val < min ) ? min : val );
-    }
     public static float maxMin(float val, float min, float max) {
         return ( val > max ) ? max : ( ( val < min ) ? min : val );
+    }
+    public static float[] maxMin(float[] val, float min, float max) {
+        float[] ret = new float[val.length];
+        for( int i = 0; i < val.length; ++i )
+            ret[i] = maxMin(val[i],min, max);
+        return ret;
     }
     public static float cyclicMaxMin(float val, float min, float max) {
         float range = max - min;
@@ -74,6 +85,12 @@ public class Util {
                 val[i] -= range;
         }
         return val;
+    }
+    public static float normalize(float val, float oldMin, float oldMax, float newMin, float newMax) {
+        return normalize(val, oldMin, oldMax) * ( newMax - newMin ) + newMin;
+    }
+    public static float normalize(float val, float min, float max) {
+        return (val-min) / (max-min);
     }
     
     // N.B.: THESE METHODs WILL NOT LOAD PIXEL DATA BEFORE BEGINNING

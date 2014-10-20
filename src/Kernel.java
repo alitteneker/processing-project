@@ -6,6 +6,7 @@ public class Kernel {
     
     protected int size;
     protected float[] data;
+    protected float minval = 0, maxval = 255;
 
     public Kernel(float[][] data, PApplet applet ) {
         this.setData(data);
@@ -39,6 +40,13 @@ public class Kernel {
         this.data = data;
         return true;
     }
+    public boolean setRange(float min, float max) {
+        if( min > max )
+            return false;
+        this.minval = min;
+        this.maxval = max;
+        return true;
+    }
     public PImage apply(PImage in) {
         return apply(in, false);
     }
@@ -47,7 +55,8 @@ public class Kernel {
         in.loadPixels();
 
         PImage out = same ? in : this.applet.createImage(width, height, in.format);
-        out.pixels = applyKernelToPixels(in.pixels, in.width, in.height);
+        int[] pixels = same ? in.pixels.clone() : in.pixels;
+        out.pixels = applyKernelToPixels(pixels, in.width, in.height);
         out.updatePixels();
 
         return out;
@@ -64,9 +73,31 @@ public class Kernel {
         return ret;
     }
     protected float[] applyKernelToSubset(float[][] input) {
-        return Util.cyclicMaxMin(Util.dotProduct(input, this.data), 0, 255);
+        float[] val = Util.dotProduct(input, this.data);
+        for( int i = 0; i < val.length; ++i )
+            if( Math.abs(val[i]) < 0.0001)
+                val[i] = 0;
+        val = normalize(val);
+        return Util.cyclicMaxMin(val, minval, maxval);
     }
     protected float applyKernelToSubset(float[] input) {
-        return Util.cyclicMaxMin(Util.dotProduct(input, this.data), 0, 255);
+        float val = Util.dotProduct(input, this.data);
+        if( Math.abs(val) < 0.0001)
+            val = 0;
+        val = normalize(val);
+        if( Math.abs(val) > 255 )
+            System.out.println(val);
+        return Util.cyclicMaxMin(val, minval, maxval);
+    }
+    protected float normalize(float input) {
+        if( minval == 0 && maxval == 255 )
+            return input;
+        return Util.normalize(input, minval, maxval, 0, 255);
+    }
+    protected float[] normalize(float[] input) {
+        float[] ret = new float[input.length];
+        for( int i = 0; i < input.length; ++i ) 
+            ret[i] = normalize(input[i]);
+        return ret;
     }
 }
