@@ -1,20 +1,23 @@
+package TestSketch.Filters;
+
+import TestSketch.Filter;
+import TestSketch.Tools.Util;
 import processing.core.*;
 
-public class Kernel {
-
-    PApplet applet;
+public class Kernel extends Filter {
     
     protected int size;
     protected float[] data;
     protected float minval = 0, maxval = 255;
+    protected boolean abs = false;
 
     public Kernel(float[][] data, PApplet applet ) {
+        super(applet);
         this.setData(data);
-        this.applet = applet;
     }
     public Kernel(float[] data, PApplet applet) {
+        super(applet);
         this.setData(data);
-        this.applet = applet;
     }
     public boolean setData(float[][] data) {
         int size = data.length;
@@ -47,21 +50,10 @@ public class Kernel {
         this.maxval = max;
         return true;
     }
-    public PImage apply(PImage in) {
-        return apply(in, false);
+    public void setAbs( boolean set ) {
+        this.abs = set;
     }
-    public PImage apply(PImage in, boolean same) {
-        int width = in.width, height = in.height;
-        in.loadPixels();
-
-        PImage out = same ? in : this.applet.createImage(width, height, in.format);
-        int[] pixels = same ? in.pixels.clone() : in.pixels;
-        out.pixels = applyKernelToPixels(pixels, in.width, in.height);
-        out.updatePixels();
-
-        return out;
-    }
-    protected int[] applyKernelToPixels(int[] pixels, int width, int height) {
+    protected int[] applyToPixels(int[] pixels, int width, int height) {
         int[] ret = new int[pixels.length];
         for( int x = 0; x < width; ++x ) {
             for( int y = 0; y < height; ++y ) {
@@ -87,12 +79,12 @@ public class Kernel {
         val = normalize(val);
         if( Math.abs(val) > 255 )
             System.out.println(val);
-        return Util.cyclicMaxMin(val, minval, maxval);
+        return val;
     }
     protected float normalize(float input) {
-        if( minval == 0 && maxval == 255 )
-            return input;
-        return Util.normalize(input, minval, maxval, 0, 255);
+        if( this.abs )
+            input = Math.abs(input);
+        return Util.cyclicMaxMin(Util.normalize(input, minval, maxval, 0, 255), minval, maxval);
     }
     protected float[] normalize(float[] input) {
         float[] ret = new float[input.length];

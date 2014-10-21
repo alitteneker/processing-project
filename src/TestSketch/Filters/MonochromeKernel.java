@@ -1,5 +1,7 @@
-import processing.core.PApplet;
+package TestSketch.Filters;
 
+import TestSketch.Tools.Util;
+import processing.core.PApplet;
 
 public class MonochromeKernel extends Kernel {
     protected boolean monobefore = true;
