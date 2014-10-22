@@ -22,11 +22,9 @@ public class Test extends PApplet {
         Kernel kernel = new MonochromeKernel(new float[]{0,-0.25f,0,-0.25f,1,-0.25f,0,-0.25f,0}, this);
         kernel.setAbs(true);
 //        kernel.setRange(-255, 255);
-
-//        Kernel invert = new Kernel(new float[]{-1f}, this);
         
         FilterStack stack = new FilterStack(this);
-        stack.push( new MonochromeKernel(KernelUtil.buildGaussianBlur(3, 0.2f), this) );
+//        stack.push( new MonochromeKernel(KernelUtil.buildGaussianBlur(3, 0.2f), this) );
 //        stack.push( new MaxContrastFilter(this) );
         stack.push(kernel);
 

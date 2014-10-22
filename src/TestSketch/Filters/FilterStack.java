@@ -1,4 +1,4 @@
-package TestSketch;
+package TestSketch.Filters;
 import java.util.*;
 
 import processing.core.*;
@@ -35,9 +35,9 @@ public class FilterStack extends Filter {
             return null;
         return stack.get(index);
     }
-    protected int[] applyToPixels(int[] pixels, int width, int height) {
+    public float[][] applyToPixels(float[][] pixels, int width, int height) {
         long time = System.currentTimeMillis();
-        int[] ret = pixels.clone();
+        float[][] ret = pixels.clone();
         for( int i = 0; i < size(); ++i )
             ret = get(i).applyToPixels(ret, width, height);
         System.out.println("Kernel Time: " + ( System.currentTimeMillis() - time ));

@@ -1,4 +1,5 @@
-package TestSketch;
+package TestSketch.Filters;
+import TestSketch.Tools.Util;
 import processing.core.*;
 
 public abstract class Filter {
@@ -11,8 +12,8 @@ public abstract class Filter {
         in.loadPixels();
 
         PImage out = same ? in : this.applet.createImage(width, height, in.format);
-        int[] pixels = same ? in.pixels.clone() : in.pixels;
-        out.pixels = applyToPixels(pixels, in.width, in.height);
+        float[][] pixels = applyToPixels(Util.getRGB(in.pixels, this.applet), in.width, in.height);
+        out.pixels = Util.toProcColor(pixels, applet);
         out.updatePixels();
 
         return out;
@@ -20,5 +21,5 @@ public abstract class Filter {
     public PImage apply(PImage in) {
         return apply(in, false);
     }
-    protected abstract int[] applyToPixels(int[] pixels, int width, int height);
+    public abstract float[][] applyToPixels(float[][] pixels, int width, int height);
 }

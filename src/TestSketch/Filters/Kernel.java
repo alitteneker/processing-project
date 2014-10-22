@@ -1,6 +1,5 @@
 package TestSketch.Filters;
 
-import TestSketch.Filter;
 import TestSketch.Tools.Util;
 import processing.core.*;
 
@@ -53,32 +52,31 @@ public class Kernel extends Filter {
     public void setAbs( boolean set ) {
         this.abs = set;
     }
-    protected int[] applyToPixels(int[] pixels, int width, int height) {
-        int[] ret = new int[pixels.length];
+    public float[][] applyToPixels(float[][] pixels, int width, int height) {
+        float[][] ret = new float[pixels.length][3];
         for( int x = 0; x < width; ++x ) {
+            float[][] colors = Util.getPixels(x, 0, this.size, pixels, width, height, this.applet);
             for( int y = 0; y < height; ++y ) {
-                // TODO: would be much better if we could shift by row, meaning we'd only have to get the next row each time
-                float[] color = applyKernelToSubset(Util.getPixelsARGB(x, y, this.size, pixels, width, height, this.applet));
-                ret[Util.getPixelIndex(x, y, width)] = applet.color(color[1], color[2], color[3], color[0]);
+                ret[Util.getPixelIndex(x, y, width)] = applyKernelToSubset(colors);
+                if( y < height - 1 ) {
+                    for( int i = 0; i < colors.length; ++i ) {
+                        if( i < colors.length - this.size )
+                            colors[i] = colors[i + this.size];
+                        else
+                            colors[i] = pixels[Util.getPixelIndex(Util.minMax(x + ( i % this.size ) - this.size/2, 0, width-1), y + 1, width)];
+                    }
+                }
             }
         }
         return ret;
     }
     protected float[] applyKernelToSubset(float[][] input) {
         float[] val = Util.dotProduct(input, this.data);
-        for( int i = 0; i < val.length; ++i )
-            if( Math.abs(val[i]) < 0.0001)
+        for( int i = 0; i < val.length; ++i ) {
+            if( Math.abs(val[i]) < 0.0001 )
                 val[i] = 0;
-        val = normalize(val);
-        return Util.cyclicMaxMin(val, minval, maxval);
-    }
-    protected float applyKernelToSubset(float[] input) {
-        float val = Util.dotProduct(input, this.data);
-        if( Math.abs(val) < 0.0001)
-            val = 0;
-        val = normalize(val);
-        if( Math.abs(val) > 255 )
-            System.out.println(val);
+            val[i] = normalize(val[i]);
+        }
         return val;
     }
     protected float normalize(float input) {
