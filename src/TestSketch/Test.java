@@ -18,21 +18,18 @@ public class Test extends PApplet {
         img[0] = loadImage("Russet-Potato.jpg");
         width = img[0].width; height = img[0].height;
         size( width, height );
-
-        Kernel kernel = new MonochromeKernel(new float[]{0,-0.25f,0,-0.25f,1,-0.25f,0,-0.25f,0}, this);
-        kernel.setAbs(true);
-//        kernel.setRange(-255, 255);
         
-        FilterStack stack = new FilterStack(this);
-//        stack.push( new MonochromeKernel(KernelUtil.buildGaussianBlur(3, 0.2f), this) );
-//        stack.push( new MaxContrastFilter(this) );
-        stack.push(kernel);
+        FilterPipe queue = new FilterPipe(this);
+        queue.push( KernelUtil.buildLaplacian(false, true, this) );
+        queue.push( new ContrastFilter(this) );
+//        queue.push( KernelUtil.buildGaussianBlur(3, 0.6f, true, this) );
 
         hist[0] = new Histogram(img[0], this);
-        img[1] = stack.apply(img[0], false);
+        img[1] = queue.apply(img[0], false);
         hist[1] = new Histogram(img[1], this);
         
         System.out.println("Filter Max/Min: " + hist[1].getMax() + "/" + hist[1].getMin() );
+        hist[1].printStats();
     }
 
     public void draw() {

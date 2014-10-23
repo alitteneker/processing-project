@@ -93,6 +93,12 @@ public class Util {
     public static float normalize(float val, float min, float max) {
         return (val-min) / (max-min);
     }
+    public static float normalizeMinMax(float val, float oldMin, float oldMax, float newMin, float newMax) {
+        return minMax( normalize(val, oldMin, oldMax, newMin, newMax), newMin, newMax);
+    }
+    public static float normalizeMinMax(float val, float oldMin, float oldMax) {
+        return minMax( normalize(val, oldMin, oldMax), 0, 1);
+    }
     
     // N.B.: THESE METHODs WILL NOT LOAD PIXEL DATA BEFORE BEGINNING
     public static int[] getPixels(int center_x, int center_y, int size, int[] pixels, int width, int height, PApplet applet) {
