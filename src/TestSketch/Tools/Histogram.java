@@ -13,41 +13,39 @@ public class Histogram {
     protected float[] stdevComponent;
     protected float minrange = 0, maxrange = 255;
     protected final float resolution = 1;
-    protected final float RANGE = 100;
+    protected static final float RANGE = 100;
 
     public Histogram(PImage img, PApplet applet) {
         this.applet = applet;
-        initialize();
-
         img.loadPixels();
-        processColorPixels(Util.getRGB(img.pixels, applet));
+        processPixels(Util.getRGB(img.pixels, applet));
     }
     public Histogram(int[] pixels, PApplet applet) {
         this.applet = applet;
-        initialize();
-        processColorPixels(Util.getRGB(pixels, applet));
+        processPixels(Util.getRGB(pixels, applet));
     }
     public Histogram(float[][] pixels, PApplet applet) {
         this.applet = applet;
-        initialize();
-        processColorPixels(pixels);
+        processPixels(pixels);
     }
-    protected void initialize() {
+    protected void initialize(int size) {
         this.mean = 0;
         this.stdev = 0;
-        this.data = new float[(int)Math.ceil(( maxrange - minrange ) / resolution) + 1][3];
-        this.meanComponent = new float[3];
-        this.stdevComponent = new float[3];
+        this.data = new float[(int)Math.ceil(( maxrange - minrange ) / resolution) + 1][size];
+        this.meanComponent = new float[size];
+        this.stdevComponent = new float[size];
     }
-    protected void processColorPixels(float[][] pixels) {
+    protected void processPixels(float[][] pixels) {
         if( pixels.length == 0 )
             return;
+        int size = pixels[0].length;
+        initialize(size);
 
-        float diff = this.RANGE/(float)pixels.length;
+        float diff = Histogram.RANGE/(float)pixels.length;
         
-        float[] mean = new float[3];
+        float[] mean = new float[size];
         float meanall = 0;
-        float[] M2 = new float[3];
+        float[] M2 = new float[size];
         float M2all = 0;
 
         for( int i = 0; i < pixels.length; ++i ) {
@@ -82,22 +80,22 @@ public class Histogram {
                 applet.color(255, 255, 255)
         };
         float[] lastY = new float[data[0].length + 1];
-        int i = -1;
+        int i = -1, j = 0;
         while( ++i < lastY.length - 1 )
-            lastY[i] = getParabolicHeight( data[0][i]/this.RANGE, height );
-        lastY[i] = getParabolicHeight(Util.average(data[0])/this.RANGE, height);
+            lastY[i] = getParabolicHeight( data[0][i]/Histogram.RANGE, height );
+        lastY[i] = getParabolicHeight(Util.average(data[0])/Histogram.RANGE, height);
         float x = 0, lastX = 0;
         for( i = 1; i < data.length; ++i ) {
-            int j = 0;
+            j = 0;
             x = i * diffWidth;
             while( j < data[i].length ) {
                 applet.stroke(colors[j]);
-                float thisY = getParabolicHeight( data[i][j]/this.RANGE, height );
+                float thisY = getParabolicHeight( data[i][j]/Histogram.RANGE, height );
                 applet.line( lastX, lastY[j], x, thisY);
                 lastY[j++] = thisY;
             }
             applet.stroke(colors[j]);
-            float thisY = getParabolicHeight(Util.average(data[i])/this.RANGE, height);
+            float thisY = getParabolicHeight(Util.average(data[i])/Histogram.RANGE, height);
             applet.line( lastX, lastY[j], x, thisY );
             lastY[j] = thisY;
             lastX = x;
@@ -161,6 +159,6 @@ public class Histogram {
         return 0;
     }
     public void printStats() {
-        System.out.println("Mean, Stdev: " + this.mean + ", " + this.stdev);
+        System.out.println("Filter Max, Min: " + getMax() + ", " + getMin() + "\nMean, Stdev: " + this.mean + ", " + this.stdev);
     }
 }
