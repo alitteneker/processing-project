@@ -11,18 +11,22 @@ public class Test extends PApplet {
 
     PImage[] img = new PImage[2];
     Histogram[] hist = new Histogram[2];
-    int width = 640, height = 480;
+    int iwidth, iheight;
 
     public void setup() {
         
-        img[0] = loadImage("Russet-Potato.jpg");
-        width = img[0].width; height = img[0].height;
-        size( width, height );
+        img[0] = loadImage("pier-in-lake.jpg");
+        iwidth = img[0].width;
+        iheight = img[0].height;
+        size( iwidth, iheight );
+        System.out.println("Image loaded!");
         
         FilterPipe queue = new FilterPipe(this);
-        queue.push( KernelUtil.buildLaplacian(false, true, this) );
+        queue.push( KernelUtil.buildLaplacian(true, true, this) );
         queue.push( new ContrastFilter(this) );
-        queue.push( KernelUtil.buildGaussianBlur(5, 0.6f, true, this) );
+        Kernel blur = KernelUtil.buildGaussianBlur(21, 15f, true, this);
+        for( int i = 0; i < 10; ++i )
+            queue.push(blur);
 
         hist[0] = new Histogram(img[0], this);
         img[1] = queue.apply(img[0], false);
@@ -33,8 +37,9 @@ public class Test extends PApplet {
 
     public void draw() {
         background(0);
+        iwidth = width; iheight = height;
         int index = mousePressed ? 0 : 1;
-        image( img[index], 0, 0, width, height);
-        hist[index].draw();
+        image( img[index], 0, 0, iwidth, iheight);
+        hist[index].draw(iwidth, iheight);
     }
 }

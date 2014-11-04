@@ -1,6 +1,7 @@
 package TestSketch.Tools;
 import TestSketch.Filters.Kernel;
 import TestSketch.Filters.MonochromeKernel;
+import TestSketch.Math.MathTools;
 import processing.core.PApplet;
 
 public class KernelUtil {
@@ -48,7 +49,7 @@ public class KernelUtil {
     
     public static Kernel buildHighPass(boolean abs, boolean mono, PApplet applet) {
         float[] ret = { -1, -1, -1, -1, 8, -1, -1, -1, -1 };
-        ret = Util.multiply(1f/8f, ret);
+        ret = MathTools.multiply(1f/8f, ret);
         Kernel kern = makeKernel(ret, mono, applet);
         manageNegative(kern, abs);
         return kern;

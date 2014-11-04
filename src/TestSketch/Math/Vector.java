@@ -1,7 +1,5 @@
 package TestSketch.Math;
 
-import TestSketch.Tools.Util;
-
 public class Vector {
     protected float[] data;
     
@@ -65,13 +63,10 @@ public class Vector {
     }
 
     public float dotProduct(Vector b) {
-        return Util.dotProduct(getData(), b.getData());
+        return MathTools.dotProduct(getData(), b.getData());
     }
     
     public float getVectorLength() {
-        float sum = 0;
-        for( int i = 0; i < data.length; ++i )
-            sum += data[i] * data[i];
-        return (float)Math.sqrt(sum);
+        return MathTools.length(data);
     }
 }

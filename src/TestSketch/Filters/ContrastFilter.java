@@ -1,7 +1,7 @@
 package TestSketch.Filters;
 
+import TestSketch.Math.MathTools;
 import TestSketch.Tools.Histogram;
-import TestSketch.Tools.Util;
 import processing.core.PApplet;
 
 public class ContrastFilter extends Filter {
@@ -21,17 +21,17 @@ public class ContrastFilter extends Filter {
     public float[][] applyToPixels(float[][] pixels, int width, int height) {
         return applyToPixels(pixels, this.deviations, width, height);
     }
-    // NB: only expands range right now, no parameterized cubic yet
+    // NB: only expands range right now (linear expansion)
     public float[][] applyToPixels(float[][] pixels, float deviations, int width, int height) {
         Histogram hist = new Histogram(pixels, this.applet);
         float mean = hist.getMean(),
                 range = deviations * hist.getStdev(),
-                max = Util.minMax(mean + range, 0, 255),
-                min = Util.minMax(mean - range, 0, 255);
+                max = MathTools.minMax(mean + range, 0, 255),
+                min = MathTools.minMax(mean - range, 0, 255);
         float[][] ret = new float[pixels.length][pixels[0].length];
         for( int i = 0; i < pixels.length; ++i )
             for( int j = 0; j < pixels[i].length; ++j )
-                ret[i][j] = Util.normalizeMinMax(pixels[i][j], min, max, 0, 255);
+                ret[i][j] = MathTools.normalizeMinMax(pixels[i][j], min, max, 0, 255);
         return ret;
     }
 }

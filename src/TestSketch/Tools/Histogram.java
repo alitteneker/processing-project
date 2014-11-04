@@ -1,5 +1,6 @@
 package TestSketch.Tools;
 
+import TestSketch.Math.MathTools;
 import processing.core.*;
 
 public class Histogram {
@@ -49,13 +50,13 @@ public class Histogram {
         float M2all = 0;
 
         for( int i = 0; i < pixels.length; ++i ) {
-            float intensity = Util.average(pixels[i]);
+            float intensity = MathTools.average(pixels[i]);
             float delta = intensity - meanall;
             meanall += delta / (float)( i + 1 );
             M2all += delta * (intensity - meanall);
             for( int j = 0; j < pixels[i].length; ++j ) {
                 intensity = pixels[i][j] / resolution;
-                data[ (int)Math.floor(intensity) ][j] += diff;
+                data[ (int)MathTools.minMax(intensity,0,data.length - 1) ][j] += diff;
 
                 delta = pixels[i][j] - mean[j];
                 mean[j] += delta / (float)( i + 1 );
@@ -69,9 +70,14 @@ public class Histogram {
         this.stdev = (float) Math.sqrt( M2all / (float)(pixels.length - 1) );
         this.mean = meanall;
     }
+    public float aggregate(float[] data) {
+        return MathTools.length(data);
+    }
     
     public void draw() {
-        int width = applet.width, height = applet.height;
+        draw(applet.width, applet.height);
+    }
+    public void draw(int width, int height) {
         float diffWidth = ((float)width) / ((float)data.length);
         int[] colors = new int[]{
                 applet.color(255, 0, 0),
@@ -83,7 +89,7 @@ public class Histogram {
         int i = -1, j = 0;
         while( ++i < lastY.length - 1 )
             lastY[i] = getParabolicHeight( data[0][i]/Histogram.RANGE, height );
-        lastY[i] = getParabolicHeight(Util.average(data[0])/Histogram.RANGE, height);
+        lastY[i] = getParabolicHeight(MathTools.average(data[0])/Histogram.RANGE, height);
         float x = 0, lastX = 0;
         for( i = 1; i < data.length; ++i ) {
             j = 0;
@@ -95,7 +101,7 @@ public class Histogram {
                 lastY[j++] = thisY;
             }
             applet.stroke(colors[j]);
-            float thisY = getParabolicHeight(Util.average(data[i])/Histogram.RANGE, height);
+            float thisY = getParabolicHeight(MathTools.average(data[i])/Histogram.RANGE, height);
             applet.line( lastX, lastY[j], x, thisY );
             lastY[j] = thisY;
             lastX = x;
@@ -128,7 +134,7 @@ public class Histogram {
         for( int i = length; i >= 0; --i )
             for( int j = 0; j < data[i].length; ++j )
                 if( data[i][j] > 0 )
-                    return Util.normalize(i, 0, length, minrange, maxrange);
+                    return MathTools.normalize(i, 0, length, minrange, maxrange);
         return 0;
     }
     // get the maximum intensity (normalized to range) with a non-zero value
@@ -137,7 +143,7 @@ public class Histogram {
         for( int i = 0; i <= length; ++i )
             for( int j = 0; j < data[i].length; ++j )
                 if( data[i][j] > 0 )
-                    return Util.normalize(i, 0, length, minrange, maxrange);
+                    return MathTools.normalize(i, 0, length, minrange, maxrange);
         return length;
     }
     public float getMaxComponent(int comp) {
@@ -146,7 +152,7 @@ public class Histogram {
         int length = data.length - 1;
         for( int i = length; i >= 0; --i )
             if( data[i][comp] > 0 )
-                return Util.normalize(i, 0, length, minrange, maxrange);
+                return MathTools.normalize(i, 0, length, minrange, maxrange);
         return 0;
     }
     public float getMinComponent(int comp) {
@@ -155,7 +161,7 @@ public class Histogram {
         int length = data.length - 1;
         for( int i = 0; i <= length; ++i )
             if( data[i][comp] > 0 )
-                return Util.normalize(i, 0, length, minrange, maxrange);
+                return MathTools.normalize(i, 0, length, minrange, maxrange);
         return 0;
     }
     public void printStats() {

@@ -1,6 +1,6 @@
 package TestSketch.Filters;
 
-import TestSketch.Tools.Util;
+import TestSketch.Math.MathTools;
 import processing.core.PApplet;
 
 public class MonochromeKernel extends Kernel {
@@ -31,16 +31,20 @@ public class MonochromeKernel extends Kernel {
         this.weights = set;
         return true;
     }
-    protected float[] applyKernelToSubset(float[][] input) {
-        float val = monobefore
-                ? Util.dotProduct(Util.dotProduct(weights, input), this.data)
-                : Util.dotProduct(weights, Util.dotProduct(input, this.data));
-        if( Math.abs(val) < 0.0001 )
-            val = 0;
+    protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height) {
+        int limit = size / 2, mx, my, locb, i;
+        float kv, val = 0;
+        for( mx = -limit; mx <= limit; ++mx ) {
+            for( my = -limit; my <= limit; ++my ) {
+                locb = MathTools.minMax(x + mx, 0, width - 1) + MathTools.minMax(y + my, 0, height - 1) * width;
+                kv = data[ limit + mx + size * ( limit + my ) ];
+                val += monobefore
+                        ? ( MathTools.dotProduct(weights, input[locb]) * kv )
+                        : MathTools.dotProduct(weights, MathTools.product(input[locb], kv));
+            }
+        }
         val = normalize(val);
-        float[] vals = new float[input[0].length];
-        for( int i = 0; i < vals.length; ++i )
-            vals[i] = val;
-        return vals;
+        for( i = 0; i < out.length; ++i )
+            out[i] = val;
     }
 }

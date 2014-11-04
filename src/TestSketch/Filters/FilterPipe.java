@@ -43,7 +43,7 @@ public class FilterPipe extends Filter {
         float[][] ret = pixels.clone();
         for( int i = 0; i < size(); ++i )
             ret = get(i).applyToPixels(ret, width, height);
-        System.out.println("Filter Time: " + ( System.currentTimeMillis() - time ));
+        System.out.println("Filter Pipe Time: " + ( System.currentTimeMillis() - time ));
         return ret;
     }
     

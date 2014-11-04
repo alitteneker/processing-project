@@ -1,14 +1,15 @@
 package TestSketch.Filters;
 
-import TestSketch.Tools.Util;
+import TestSketch.Math.MathTools;
 import processing.core.*;
 
-public class Kernel extends Filter {
+public class Kernel extends MultithreadedFilter {
     
     protected int size;
     protected float[] data;
     protected float minval = 0, maxval = 255;
     protected boolean abs = false;
+    protected boolean single = false;
 
     public Kernel(float[][] data, PApplet applet ) {
         super(applet);
@@ -53,41 +54,42 @@ public class Kernel extends Filter {
         this.abs = set;
     }
     public float[][] applyToPixels(float[][] pixels, int width, int height) {
+        if(!single)
+            return super.applyToPixels(pixels, width, height);
+        int x, y, loca;
         float[][] ret = new float[pixels.length][3];
-        for( int x = 0; x < width; ++x ) {
-            float[][] colors = Util.getPixels(x, 0, this.size, pixels, width, height, this.applet);
-            for( int y = 0; y < height; ++y ) {
-                ret[Util.getPixelIndex(x, y, width)] = applyKernelToSubset(colors);
-                if( y < height - 1 ) {
-                    for( int i = 0; i < colors.length; ++i ) {
-                        if( i < colors.length - this.size )
-                            colors[i] = colors[i + this.size];
-                        else
-                            colors[i] = pixels[Util.getPixelIndex(Util.minMax(x + ( i % this.size ) - this.size/2, 0, width-1), y + 1, width)];
-                    }
-                }
+        for( x = 0; x < width; ++x ) {
+            for( y = 0; y < height; ++y ) {
+                loca = x + y * width;
+                applyToPixel(ret[loca], pixels, x, y, loca, width, height);
             }
         }
         return ret;
     }
-    protected float[] applyKernelToSubset(float[][] input) {
-        float[] val = Util.dotProduct(input, this.data);
-        for( int i = 0; i < val.length; ++i ) {
-            if( Math.abs(val[i]) < 0.0001 )
-                val[i] = 0;
-            val[i] = normalize(val[i]);
+    protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height) {
+        int limit = size / 2, mx, my, locb, i;
+        float kv;
+        for( mx = -limit; mx <= limit; ++mx ) {
+            for( my = -limit; my <= limit; ++my ) {
+                locb = MathTools.minMax(x + mx, 0, width - 1) + MathTools.minMax(y + my, 0, height - 1) * width;
+                kv = data[ limit + mx + size * ( limit + my ) ];
+                for( i = 0; i < out.length; ++i )
+                    out[i] += input[locb][i] * kv;
+            }
         }
-        return val;
+        for( i = 0; i < out.length; ++i )
+            out[i] = normalize( out[i] );
     }
     protected float normalize(float input) {
+        if( Math.abs(input) < 0.0001 )
+            input = 0;
         if( this.abs )
             input = Math.abs(input);
-        return Util.cyclicMaxMin(Util.normalize(input, minval, maxval, 0, 255), minval, maxval);
+        return MathTools.cyclicMaxMin(MathTools.normalize(input, minval, maxval, 0, 255), minval, maxval);
     }
     protected float[] normalize(float[] input) {
-        float[] ret = new float[input.length];
         for( int i = 0; i < input.length; ++i ) 
-            ret[i] = normalize(input[i]);
-        return ret;
+            input[i] = normalize(input[i]);
+        return input;
     }
 }
