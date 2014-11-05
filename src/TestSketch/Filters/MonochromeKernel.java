@@ -8,11 +8,11 @@ public class MonochromeKernel extends Kernel {
     //RGB format
     protected float[] weights = { 0.25f, 0.25f, 0.25f }; 
 
-    public MonochromeKernel(float[] data, PApplet applet) {
-        super(data, applet);
+    public MonochromeKernel(float[] data, int width, int height, PApplet applet) {
+        super(data, width, height, applet);
     }
-    public MonochromeKernel(float[] data, boolean monobefore, PApplet applet) {
-        super(data, applet);
+    public MonochromeKernel(float[] data, int width, int height, boolean monobefore, PApplet applet) {
+        super(data, width, height, applet);
         setMonoBefore(monobefore);
     }
     public MonochromeKernel(float[][] data, PApplet applet) {
@@ -32,18 +32,18 @@ public class MonochromeKernel extends Kernel {
         return true;
     }
     protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height) {
-        int limit = size / 2, mx, my, locb, i;
+        int limit = this.width / 2, mx, my, locb, i;
         float kv, val = 0;
         for( mx = -limit; mx <= limit; ++mx ) {
             for( my = -limit; my <= limit; ++my ) {
                 locb = MathTools.minMax(x + mx, 0, width - 1) + MathTools.minMax(y + my, 0, height - 1) * width;
-                kv = data[ limit + mx + size * ( limit + my ) ];
+                kv = data[ limit + mx + this.width * ( limit + my ) ];
                 val += monobefore
                         ? ( MathTools.dotProduct(weights, input[locb]) * kv )
                         : MathTools.dotProduct(weights, MathTools.product(input[locb], kv));
             }
         }
-        val = normalize(val);
+        val = normalizeValue(val);
         for( i = 0; i < out.length; ++i )
             out[i] = val;
     }

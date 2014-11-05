@@ -14,7 +14,7 @@ public class KernelUtil {
         for( int i = 0; i < N; ++i )
             ret[i] = val;
 
-        return new Kernel(ret, applet);
+        return new Kernel(ret, N, N, applet);
     }
     public static Kernel buildBoxBlur(int N, PApplet applet) {
         return buildBoxBlur(N, false, applet);
@@ -41,14 +41,24 @@ public class KernelUtil {
             }
         }
         
-        return new Kernel(ret, applet);
+        return new Kernel(normalizeKernelData(ret), applet);
     }
     public static Kernel buildGaussianBlur(int N, float var, PApplet applet) {
         return buildGaussianBlur(N, var, false, applet);
     }
+    public static Kernel buildLinearGaussianBlur(int N, float var, PApplet applet) {
+        if( N % 2 == 0 )
+            return null;
+        float[] data = new float[N];
+        float scale = 1f / (float)Math.sqrt(2f * (float)Math.PI * var);
+        int limit = N/2;
+        for( int x = -limit; x <= limit; ++x )
+            data[x+limit] = scale * (float)Math.exp( -(x * x) / (2f * var) );
+        return new Kernel(normalizeKernelData(data), N, 1, applet);
+    }
     
     public static Kernel buildHighPass(boolean abs, boolean mono, PApplet applet) {
-        float[] ret = { -1, -1, -1, -1, 8, -1, -1, -1, -1 };
+        float[][] ret = { { -1, -1, -1 }, { -1, 8, -1 }, { -1, -1, -1 } };
         ret = MathTools.multiply(1f/8f, ret);
         Kernel kern = makeKernel(ret, mono, applet);
         manageNegative(kern, abs);
@@ -59,7 +69,7 @@ public class KernelUtil {
     }
 
     public static Kernel buildLaplacian(boolean abs, boolean mono, PApplet applet) {
-        Kernel kern = makeKernel( new float[]{ 0, -0.25f, 0, -0.25f, 1, -0.25f, 0, -0.25f, 0 }, mono, applet );
+        Kernel kern = makeKernel( new float[][]{ { 0, -0.25f, 0 }, { -0.25f, 1, -0.25f }, { 0, -0.25f, 0 } }, mono, applet );
         manageNegative(kern, abs);
         return kern;
     }
@@ -67,19 +77,64 @@ public class KernelUtil {
         return buildLaplacian(false, false, applet);
     }
     
+    public static Kernel combineKernels(Kernel a, Kernel b) {
+        Kernel k = makeKernel(
+                combineKernels( a.getData(), a.getWidth(), a.getHeight(), b.getData(), b.getWidth(), b.getHeight() ),
+                a instanceof MonochromeKernel && b instanceof MonochromeKernel,
+                a.applet);
+        if( a.getMode() == b.getMode() )
+            k.setMode(a.getMode());
+        k.setRange(Math.min(a.getMin(), b.getMin()), Math.max(a.getMax(), b.getMax()));    
+        return k;
+    }
+    public static float[][] combineKernels(float[] a, int widthA, int heightA, float[] b, int widthB, int heightB) {
+        int widthRet = widthA + widthB - 1, heightRet = heightA + heightB - 1;
+        float[][] ret = new float[heightRet][widthRet];
+        int i, j;
+        for( i = 0; i < a.length; ++i ) {
+            for( j = 0; j < b.length; ++j ) {
+                ret[ (i / widthA) + (j / widthB) ][ (i % widthA) + (j % widthB) ] += a[i] * b[j];
+            }
+        }
+        return normalizeKernelData(ret);
+    }
+    public static float[][] normalizeKernelData(float[][] data) {
+        float posSum = 0, negSum = 0;
+        for( int i = 0; i < data.length; ++i )
+            for( int j = 0; j < data[i].length; ++j )
+                if( data[i][j] < 0 )
+                    negSum -= data[i][j];
+                else
+                    posSum += data[i][j];
+        if( ( posSum == 0 && negSum == 0 ) || ( posSum == 1 && negSum == 1 ) )
+            return data;
+        return MathTools.multiply( 1f / Math.max(posSum, negSum), data );
+    }
+    public static float[] normalizeKernelData(float[] data) {
+        float posSum = 0, negSum = 0;
+        for( int i = 0; i < data.length; ++i )
+            if( data[i] < 0 )
+                negSum -= data[i];
+            else
+                posSum += data[i];
+        if( ( posSum == 0 && negSum == 0 ) || ( posSum == 1 && negSum == 1 ) )
+            return data;
+        return MathTools.product( data, 1f / Math.max(posSum, negSum) );
+    }
+    
     public static void manageNegative(Kernel kern, boolean abs) {
         if( abs )
-            kern.setAbs(true);
+            kern.setMode(Kernel.MODE_ABS);
         else
             kern.setRange(-255, 255);
     }
     
-    public static Kernel makeKernel(float[] data, boolean mono, PApplet applet) {
+    public static Kernel makeKernel(float[] data, int width, int height, boolean mono, PApplet applet) {
         Kernel ret;
         if( mono )
-            ret = new MonochromeKernel(data, applet);
+            ret = new MonochromeKernel(data, width, height, applet);
         else
-            ret = new Kernel(data, applet);
+            ret = new Kernel(data, width, height, applet);
         return ret;
     }
     public static Kernel makeKernel(float[][] data, boolean mono, PApplet applet) {
@@ -89,5 +144,11 @@ public class KernelUtil {
         else
             ret = new Kernel(data, applet);
         return ret;
+    }
+    public static void printKernel(Kernel k) {
+        int width = k.getWidth();
+        float[] data = k.getData();
+        for( int i = 0; i < data.length; ++i )
+            System.out.print(data[i] + ( ( i % width == 0 ) ? "\t" : "\n " ) );
     }
 }
