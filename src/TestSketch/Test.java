@@ -32,7 +32,7 @@ public class Test extends PApplet {
             queue.push(blurB);
 
         hist[0] = new Histogram(img[0], this);
-        System.out.println("Setup time: "+ (System.currentTimeMillis() - time));
+        System.out.println("Setup time: "+ ( System.currentTimeMillis() - time ) );
         img[1] = queue.apply(img[0], false);
         hist[1] = new Histogram(img[1], this);
         

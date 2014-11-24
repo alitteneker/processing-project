@@ -10,7 +10,7 @@ public class Kernel extends MultithreadedFilter {
     protected float[] data;
     protected float minval = 0, maxval = 255;
     protected int mode = MODE_MINMAX;
-    protected boolean single = false;
+    protected boolean singleThreaded = false;
 
     public Kernel(float[][] data, PApplet applet ) {
         super(applet);
@@ -98,7 +98,7 @@ public class Kernel extends MultithreadedFilter {
         return this.mode;
     }
     public float[][] applyToPixels(float[][] pixels, int width, int height) {
-        if(!single)
+        if(!singleThreaded)
             return super.applyToPixels(pixels, width, height);
         int x, y, loca;
         float[][] ret = new float[pixels.length][3];

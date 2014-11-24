@@ -10,6 +10,7 @@ public class Vector {
         if( size >= 0 )
             data = new float[size];
     }
+    // default to (X,Y)
     public Vector() {
         this(2);
     }

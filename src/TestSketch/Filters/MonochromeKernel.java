@@ -1,9 +1,10 @@
 package TestSketch.Filters;
 
 import TestSketch.Math.MathTools;
+import TestSketch.Math.MonoOperator;
 import processing.core.PApplet;
 
-public class MonochromeKernel extends Kernel {
+public class MonochromeKernel extends Kernel implements MonoOperator {
     protected boolean monobefore = true;
     //RGB format
     protected float[] weights = { 0.25f, 0.25f, 0.25f }; 
@@ -32,7 +33,12 @@ public class MonochromeKernel extends Kernel {
         return true;
     }
     protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height) {
-        int limit = this.width / 2, mx, my, locb, i;
+        float val = normalizeValue( getPixelValue(input, x, y, loca, width, height) );
+        for( int i = 0; i < out.length; ++i )
+            out[i] = val;
+    }
+    public float getPixelValue(float[][] input, int x, int y, int loca, int width, int height) {
+        int limit = this.width / 2, mx, my, locb;
         float kv, val = 0;
         for( mx = -limit; mx <= limit; ++mx ) {
             for( my = -limit; my <= limit; ++my ) {
@@ -43,8 +49,6 @@ public class MonochromeKernel extends Kernel {
                         : MathTools.dotProduct(weights, MathTools.product(input[locb], kv));
             }
         }
-        val = normalizeValue(val);
-        for( i = 0; i < out.length; ++i )
-            out[i] = val;
+        return val;
     }
 }
