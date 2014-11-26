@@ -32,6 +32,14 @@ public class MonochromeKernel extends Kernel implements MonoOperator {
         this.weights = set;
         return true;
     }
+    public Kernel transpose(boolean same) {
+        float[] data = getTransposedData();
+        if( same ) {
+            setData(data, height, width);
+            return this;
+        }
+        return new MonochromeKernel(data, height, width, this.applet);
+    }
     protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height) {
         float val = normalizeValue( getPixelValue(input, x, y, loca, width, height) );
         for( int i = 0; i < out.length; ++i )

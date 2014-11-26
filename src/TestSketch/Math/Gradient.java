@@ -1,24 +1,32 @@
 package TestSketch.Math;
 
 import processing.core.PApplet;
+import processing.core.PImage;
 import TestSketch.Tools.Util;
 
 public class Gradient {
     protected int width, height, components;
-    protected Vector[] data;
+    protected float[][] data;
     
     public Gradient(float[][] pixels, int width, int height, MonoOperator[] operators) {
-        setSize(width, height, operators.length);
+        setSize(width, height, operators.length, true);
         buildFromOperators(pixels, width, height, operators);
+    }
+    public Gradient(PImage img, MonoOperator[] operators) {
+        setSize(img.width, img.height, operators.length, true);
+        buildFromOperators(img, operators);
+    }
+    public boolean buildFromOperators(PImage img, MonoOperator[] operators) {
+        img.loadPixels();
+        return buildFromOperators(Util.getRGB(img.pixels, Util.applet), img.width, img.height, operators);
     }
     public boolean buildFromOperators(float[][] pixels, int width, int height, MonoOperator[] operators) {
         if( this.width != width || this.height != height || this.components != operators.length )
             return false;
-        float[][] data = new float[pixels.length][operators.length];
         int i,j;
         for( i = 0; i < pixels.length; ++i ) {
             for( j = 0; j < operators.length; ++j ) {
-                data[i][j] = operators[j].getPixelValue(pixels, i%width, i/width, i, width, height);
+                data[i].setComponent( operators[j].getPixelValue(pixels, i%width, i/width, i, width, height), j );
             }
         }
         return true;
@@ -117,7 +125,7 @@ public class Gradient {
     public Vector getAt(int x, int y) {
         if( x < 0 || x >= width || y < 0 || y >= height )
             return null;
-        return data[x + y * width ];
+        return new Vector(data[x + y * width ]);
     }
     public float getLengthAt(int x, int y) {
         return getAt(x, y).getVectorLength();
@@ -135,5 +143,11 @@ public class Gradient {
         for( int i = 0; i < fdata.length; ++i )
             ret[i] = Util.toProcColor(fdata[i], applet);
         return ret;
+    }
+    public PImage toImage(PApplet applet) {
+        PImage out = applet.createImage(width, height, PApplet.RGB);
+        out.pixels = toPixels(applet);
+        out.updatePixels();
+        return out;
     }
 }

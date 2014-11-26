@@ -48,15 +48,19 @@ public class Kernel extends MultithreadedFilter {
         return transpose(true);
     }
     public Kernel transpose(boolean same) {
-        int width = this.width, height = this.height;
-        float[] data = new float[this.data.length];
-        for( int i = 0; i < data.length; ++i )
-            data[ (i % width) + (i / width) * height ] = this.data[i];
+        float[] data = getTransposedData();
         if( same ) {
             setData(data, height, width);
             return this;
         }
         return new Kernel(data, height, width, this.applet);
+    }
+    public float[] getTransposedData() {
+        int width = this.width, height = this.height;
+        float[] data = new float[this.data.length];
+        for( int i = 0; i < data.length; ++i )
+            data[ (i / width) + (i % width) * height ] = this.data[i];
+        return data;
     }
 
     // assume the kernel is square

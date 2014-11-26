@@ -2,6 +2,11 @@ package TestSketch.Tools;
 import processing.core.*;
 
 public class Util {
+    public static PApplet applet;
+    
+    public static float sqrt(float val) {
+        return (float)Math.sqrt(val);
+    }
     public static int getPixelIndex(int x, int y, int width) {
         return x + ( y * width );
     }
@@ -84,11 +89,11 @@ public class Util {
         return applet.color(color);
     }
     
-    public static float[][] resizeImage(float[][] original, int oldWidth, int oldHeight, int newWidth, int newHeight) {
-        float[][] ret = new float[newWidth * newHeight][original[0].length];
-        float dWidth = (float)newWidth/(float)oldWidth,
-                dHeight = (float)newHeight/(float)oldHeight;
-        // TODO
-        return ret;
-    }
+//    public static float[][] resizeImage(float[][] original, int oldWidth, int oldHeight, int newWidth, int newHeight) {
+//        float[][] ret = new float[newWidth * newHeight][original[0].length];
+//        float dWidth = (float)newWidth/(float)oldWidth,
+//                dHeight = (float)newHeight/(float)oldHeight;
+//        // TODO
+//        return ret;
+//    }
 }

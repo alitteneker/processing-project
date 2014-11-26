@@ -33,11 +33,11 @@ public abstract class MultithreadedFilter extends Filter {
             if( tg.activeCount() < processors )
                 threads.get( i++ ).start();
             else
-                try { Thread.sleep(100); }
+                try { Thread.sleep(5); }
                     catch (InterruptedException e) { e.printStackTrace(); }
         }
         while( tg.activeCount() > 0 ) {
-            try { Thread.sleep(100); } 
+            try { Thread.sleep(5); } 
                 catch (InterruptedException e) { e.printStackTrace(); }
         }
 

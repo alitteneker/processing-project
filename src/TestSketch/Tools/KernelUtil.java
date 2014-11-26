@@ -76,6 +76,11 @@ public class KernelUtil {
     public static Kernel buildLaplacian(PApplet applet) {
         return buildLaplacian(false, false, applet);
     }
+    public static MonochromeKernel[] buildSobel(PApplet applet) {
+        float[][] data = normalizeKernelData(new float[][]{{ -1, -2, -1 },{ 0, 0, 0 },{ 1, 2, 1 }});
+        MonochromeKernel x = new MonochromeKernel(data, applet);
+        return new MonochromeKernel[] { x, (MonochromeKernel)x.transpose(false) };
+    }
     
     public static Kernel combineKernels(Kernel a, Kernel b) {
         Kernel k = makeKernel(
@@ -148,7 +153,11 @@ public class KernelUtil {
     public static void printKernel(Kernel k) {
         int width = k.getWidth();
         float[] data = k.getData();
-        for( int i = 0; i < data.length; ++i )
-            System.out.print(data[i] + ( ( i % width == 0 ) ? "\t" : "\n " ) );
+        for( int i = 0; i < data.length; ++i ) {
+            if( i > 0 )
+                System.out.print( ( i % width == 0 ) ? "\n" : "\t" );
+            System.out.print( data[i] );
+        }
+        System.out.println('\n');
     }
 }

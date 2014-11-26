@@ -23,6 +23,12 @@ public class Vector {
             return data[comp];
         return 0;
     }
+    public boolean setComponent( float val, int comp ) {
+        if( comp >= getSize() || comp < 0 )
+            return false;
+        data[comp] = val;
+        return true;
+    }
     public float[] getData() {
         return data;
     }

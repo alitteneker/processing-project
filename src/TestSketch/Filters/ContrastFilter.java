@@ -11,16 +11,20 @@ public class ContrastFilter extends Filter {
     public ContrastFilter(PApplet applet) {
         super(applet);
     }
+
     public ContrastFilter(PApplet applet, float deviations) {
         super(applet);
         setDeviations(deviations);
     }
+
     public void setDeviations(float set) {
         this.deviations = set;
     }
+
     public float[][] applyToPixels(float[][] pixels, int width, int height) {
         return applyToPixels(pixels, this.deviations, width, height);
     }
+
     // NB: only expands range right now (linear expansion)
     public float[][] applyToPixels(float[][] pixels, float deviations, int width, int height) {
         Histogram hist = new Histogram(pixels, this.applet);
