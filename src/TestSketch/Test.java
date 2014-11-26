@@ -22,10 +22,10 @@ public class Test extends PApplet {
         
         long time = System.currentTimeMillis();
         img[0] = loadImage("bridge-to-nowhere.jpg");
-        if( img[0].width * img[0].height > maxSize ) {
-            float scale = Util.sqrt((float)( img[0].width * img[0].height ) / maxSize );
-            img[0].resize( Math.round(((float)img[0].width) / scale), Math.round(((float)img[0].height) / scale) );
-        }
+//        if( img[0].width * img[0].height > maxSize ) {
+//            float scale = Util.sqrt((float)( img[0].width * img[0].height ) / maxSize );
+//            img[0].resize( Math.round(((float)img[0].width) / scale), Math.round(((float)img[0].height) / scale) );
+//        }
         iwidth = img[0].width;
         iheight = img[0].height;
         size( iwidth, iheight );

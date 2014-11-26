@@ -9,11 +9,11 @@ public class Gradient {
     protected float[][] data;
     
     public Gradient(float[][] pixels, int width, int height, MonoOperator[] operators) {
-        setSize(width, height, operators.length, true);
+        setSize(width, height, operators.length);
         buildFromOperators(pixels, width, height, operators);
     }
     public Gradient(PImage img, MonoOperator[] operators) {
-        setSize(img.width, img.height, operators.length, true);
+        setSize(img.width, img.height, operators.length);
         buildFromOperators(img, operators);
     }
     public boolean buildFromOperators(PImage img, MonoOperator[] operators) {
@@ -26,7 +26,7 @@ public class Gradient {
         int i,j;
         for( i = 0; i < pixels.length; ++i ) {
             for( j = 0; j < operators.length; ++j ) {
-                data[i].setComponent( operators[j].getPixelValue(pixels, i%width, i/width, i, width, height), j );
+                data[i][j]= operators[j].getPixelValue(pixels, i%width, i/width, i, width, height);
             }
         }
         return true;
@@ -52,15 +52,11 @@ public class Gradient {
         setSize(data[0].length, data.length, 1);
         setData(data);
     }
-    public void setSize( int width, int height, int components ) {
-        setSize( width, height, components, false );
-    }
-    public void setSize( int width, int height, int components, boolean instantiate) {
-        data = new Vector[width * height];
-        this.width = width; this.height = height; this.components = components;
-        if( instantiate )
-            for( int i = 0; i < data.length; ++i )
-                    data[i] = new Vector(components);
+    public void setSize( int width, int height, int components) {
+        data = new float[width * height][components];
+        this.width = width;
+        this.height = height;
+        this.components = components;
     }
     public boolean setData(float[][][] data) {
         if( data.length != width )
@@ -71,20 +67,18 @@ public class Gradient {
             for( int j = 0; j < data[0].length; ++j ) {
                 if( data[i][j].length != components )
                     return false;
-                this.data[i + j * width].setData(data[i][j]);
+                this.data[i + j * width] = data[i][j];
             }
         }
         return true;
     }
     public boolean setData(float[][] data) {
-        if( data.length != width )
+        if( data.length != (width * height) )
             return false;
         for( int i = 0; i < data.length; ++i ) {
-            if( data[i].length != height )
+            if( data[i].length != components )
                 return false;
-            for( int j = 0; j < data[0].length; ++j ) {
-                this.data[i + j * width].setData(data[i][j]);
-            }
+            this.data[i] = data[i];
         }
         return true;
     }
@@ -94,7 +88,7 @@ public class Gradient {
         for( int i = 0; i < data.length; ++i ) {
             if( data[i].getSize() != components )
                 return false;
-            this.data[i] = data[i];
+            this.data[i] = data[i].data;
         }
         return true;
     }
@@ -106,7 +100,7 @@ public class Gradient {
             for( int j = 0; j < data[i].length; ++j ) {
                 if( data[i][j].getSize() != components )
                     return false;
-                this.data[i + j * width] = data[i][j];
+                this.data[i + j * width] = data[i][j].data;
             }
         }
         return true;
