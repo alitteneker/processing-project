@@ -41,18 +41,25 @@ public class Vector {
     }
 
     public float[] addArray(float[] b) {
+        return addArray(b, 1);
+    }
+    public float[] addArray(float[] b, float scale) {
         int size = Math.min(b.length, getSize());
         float[] ret = new float[size];
-        for( int i = 0; i < size; ++i ) {
-            ret[i] = data[i] + b[i];
-        }
+        for( int i = 0; i < size; ++i )
+            ret[i] = data[i] + b[i] * scale;
         return ret;
     }
     public Vector add(Vector b) {
         return new Vector( addArray( b.getData() ) );
     }
     public void addEquals(Vector b) {
-        setData(addArray(b.getData()));
+        addEquals(b, 1);
+    }
+    public void addEquals(Vector b, float scale) {
+        int size = Math.min(b.getSize(), getSize());
+        for( int i = 0; i < size; ++i )
+            data[i] += b.getComponent(i) * scale;
     }
 
     public float[] multiplyArray(float s) {
@@ -75,5 +82,11 @@ public class Vector {
     
     public float getVectorLength() {
         return MathTools.length(data);
+    }
+    
+    public void printVector() {
+        for( int i = 0; i < data.length; ++i )
+            System.out.print(data[i] + "\t");
+        System.out.println();
     }
 }

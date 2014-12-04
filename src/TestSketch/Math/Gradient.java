@@ -115,9 +115,35 @@ public class Gradient {
     public int getComponents() {
         return components;
     }
-    
+    public boolean isOutOfBounds(float x, float y) {
+        return ( x < 0 || x >= width || y < 0 || y >= height );
+    }
+    public Vector getAt(float x, float y) {
+        if( isOutOfBounds(x, y) )
+            return null;
+
+        int minX = MathTools.floor(x), minY = MathTools.floor(y),
+            maxX = MathTools.ceil(x),  maxY = MathTools.ceil(y);
+
+        if( x == maxX )
+            ++maxX;
+        if( y == maxY )
+            ++maxY;
+
+        Vector ret = new Vector(components);
+
+        maxX = MathTools.minMax(maxX, 0, width - 1);
+        maxY = MathTools.minMax(maxY, 0, height - 1);
+
+        ret.addEquals(getAt(minX, minY), (1 - x + minX) * (1 - y + minY));
+        ret.addEquals(getAt(minX, maxY), (1 - x + minX) * (1 - maxY + y));
+        ret.addEquals(getAt(maxX, minY), (1 - maxX + x) * (1 - y + minY));
+        ret.addEquals(getAt(maxX, maxY), (1 - maxX + x) * (1 - maxY + y));
+
+        return ret;
+    }
     public Vector getAt(int x, int y) {
-        if( x < 0 || x >= width || y < 0 || y >= height )
+        if( isOutOfBounds(x, y) )
             return null;
         return new Vector(data[x + y * width ]);
     }

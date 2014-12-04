@@ -3,6 +3,7 @@ import TestSketch.Filters.Kernel;
 import TestSketch.Filters.MonochromeKernel;
 import TestSketch.Math.MathTools;
 import processing.core.PApplet;
+import processing.core.PImage;
 
 public class KernelUtil {
     public static Kernel buildBoxBlur(int N, boolean mono, PApplet applet) {
@@ -159,5 +160,12 @@ public class KernelUtil {
             System.out.print( data[i] );
         }
         System.out.println('\n');
+    }
+    
+    public static void maxPixelSize(PImage check, int maxSize) {
+        if( check.width * check.height > maxSize ) {
+            float scale = Util.sqrt((float)( check.width * check.height ) / maxSize );
+            check.resize( Math.round(((float)check.width) / scale), Math.round(((float)check.height) / scale) );
+        }
     }
 }
