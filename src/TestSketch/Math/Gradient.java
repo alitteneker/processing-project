@@ -148,7 +148,7 @@ public class Gradient {
         return new Vector(data[x + y * width ]);
     }
     public float getLengthAt(int x, int y) {
-        return getAt(x, y).getVectorLength();
+        return getAt(x, y).getLength();
     }
     public float[] toFloatPixels() {
         float[] ret = new float[width * height];

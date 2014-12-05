@@ -53,13 +53,15 @@ public class Vector {
     public Vector add(Vector b) {
         return new Vector( addArray( b.getData() ) );
     }
-    public void addEquals(Vector b) {
+    public Vector addEquals(Vector b) {
         addEquals(b, 1);
+        return this;
     }
-    public void addEquals(Vector b, float scale) {
+    public Vector addEquals(Vector b, float scale) {
         int size = Math.min(b.getSize(), getSize());
         for( int i = 0; i < size; ++i )
             data[i] += b.getComponent(i) * scale;
+        return this;
     }
 
     public float[] multiplyArray(float s) {
@@ -71,16 +73,29 @@ public class Vector {
     public Vector multiply(float s) {
         return new Vector(multiplyArray(s));
     }
-    public void multiplyEquals(float s) {
+    public Vector multiplyEquals(float s) {
         for( int i = 0; i < this.data.length; ++i )
             this.data[i] *= s;
+        return this;
+    }
+    
+    public Vector square() {
+        float[] data = new float[getSize()];
+        for( int i = 0; i < data.length; ++i )
+            data[i] = this.data[i] * this.data[i];
+        return new Vector(data);
+    }
+    public Vector squareEquals() {
+        for( int i = 0; i < data.length; ++i )
+            data[i] *= data[i];
+        return this;
     }
 
     public float dotProduct(Vector b) {
         return MathTools.dotProduct(getData(), b.getData());
     }
     
-    public float getVectorLength() {
+    public float getLength() {
         return MathTools.length(data);
     }
     

@@ -2,9 +2,7 @@ package TestSketch;
 
 import TestSketch.Filters.*;
 import TestSketch.Math.Gradient;
-import TestSketch.Math.MathTools;
 import TestSketch.Math.Vector;
-import TestSketch.Math.Matrix.Matrix;
 import TestSketch.Tools.Histogram;
 import TestSketch.Tools.KernelUtil;
 import TestSketch.Tools.Util;
@@ -21,11 +19,11 @@ public class Test extends PApplet {
     float lastx = 0, lasty = 0;
 
     public void loadImage() {
-      img[0] = loadImage("bridge-to-nowhere.jpg");
-      iwidth = img[0].width;
-      iheight = img[0].height;
-      size( iwidth, iheight );
-      System.out.println("Image loaded!");
+        img[0] = loadImage("bridge-to-nowhere.jpg");
+        iwidth = img[0].width;
+        iheight = img[0].height;
+        size( iwidth, iheight );
+        System.out.println("Image loaded!");
     }
 
     public void setup() {
@@ -64,7 +62,7 @@ public class Test extends PApplet {
                 lasty = y;
             }
         }
-        
+
 //      image( img[index], 0, 0, iwidth, iheight);
 //      hist[index].draw(iwidth, iheight);
     }

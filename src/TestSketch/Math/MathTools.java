@@ -18,6 +18,14 @@ public class MathTools {
             ret[i] = a[i] * b[i];
         return ret;
     }
+    
+    public static Vector difference( Vector a, Vector b ) {
+        int size = Math.min( a.getSize(), b.getSize() );
+        float[] data = new float[ size ];
+        for( int i = 0; i < size; ++i )
+            data[i] = a.getComponent(i) - b.getComponent(i);
+        return new Vector(data);
+    }
 
     // dot product with arrays; if lengths differ, uses the shorter length
     public static float dotProduct(float[] a, float[] b) {
@@ -122,6 +130,14 @@ public class MathTools {
 
     // make sure a value is within a range by cycling the value through the range
     // (eg. 156 in range 25-50 will return 31, -22 in range 0-10 will return 8)
+    public static int cyclicMinMax(int val, int min, int max) {
+        int range = max - min;
+        while( val < min )
+            val += range;
+        while( val > max )
+            val -= range;
+        return val;
+    }
     public static float cyclicMinMax(float val, float min, float max) {
         float range = max - min;
         while( val < min )
@@ -238,17 +254,5 @@ public class MathTools {
     }
     public static float[] cartesianToPolar(float x, float y) {
         return new float[] { distance(x, y), atan2(x, y) };
-    }
-    public static String getString(float[] data) {
-        return join(" ",data);
-    }
-    public static String join( String separator, float[] data) {
-        String ret = "";
-        for( int i = 0; i < data.length; ++i ) {
-            if( i > 0 )
-                ret += separator;
-            ret += data[i];
-        }
-        return ret;
     }
 }
