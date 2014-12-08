@@ -1,7 +1,10 @@
 package TestSketch;
 
+import java.util.ArrayList;
+
 import TestSketch.Filters.*;
 import TestSketch.Math.Gradient;
+import TestSketch.Math.MathTools;
 import TestSketch.Math.Vector;
 import TestSketch.Tools.Histogram;
 import TestSketch.Tools.KernelUtil;
@@ -13,13 +16,18 @@ public class Test extends PApplet {
     private static final long serialVersionUID = 1L;
 
     PImage[] img = new PImage[3];
-    Histogram[] hist = new Histogram[2];
-    Gradient grad;
     int iwidth, iheight;
     float lastx = 0, lasty = 0;
+    
+    Gradient grad;
+    ArrayList<Vector> vec;
+    float min_control_dist = 5;
+    float alpha = 0.001f, beta = 0.4f, certainty = 0.8f, gamma = 1f;
+    boolean started = false;
 
     public void loadImage() {
         img[0] = loadImage("bridge-to-nowhere.jpg");
+        KernelUtil.maxPixelSize(img[0],90000);
         iwidth = img[0].width;
         iheight = img[0].height;
         size( iwidth, iheight );
@@ -29,41 +37,44 @@ public class Test extends PApplet {
     public void setup() {
         Util.applet = this;
 
+        vec = new ArrayList<Vector>();
+        
         loadImage();
+        img[1] = KernelUtil.buildGaussianBlur(5, 0.6f, this).apply(img[0]);
 
-        FilterPipe queue = new FilterPipe(this);
-        queue.push( KernelUtil.buildLaplacian(true, true, this) );
-        queue.push( new ContrastFilter(this) );
-
-        grad = new Gradient(img[0], KernelUtil.buildSobel(this));
-        img[2] = grad.toImage(this);
-
-        hist[0] = new Histogram(img[0], this);
-
-        img[1] = queue.apply(img[0], false);
-        hist[1] = new Histogram(img[1], this);
-        hist[1].printStats(); 
+        grad = new Gradient(img[1], KernelUtil.buildSobel(this));
+        img[2] = grad.toImage(this); 
     }
 
     public void draw() {
         background(0);
         iwidth = width; iheight = height;
 
-        image( img[2], 0,0, iwidth, iheight);
+        image( img[1], 0,0, iwidth, iheight);
+        
+         if( mousePressed && !started ) {
+             Vector pos = new Vector( MathTools.normalize(mouseX, 0, iwidth, 0, img[0].width), MathTools.normalize(mouseY, 0, iheight, 0, img[1].height));
+             if( vec.size() == 0 || MathTools.distance( pos, vec.get(vec.size()-1 ) ) >= min_control_dist )
+                 vec.add(pos);
+         }
+        // if( key == SPACE && !started ) {
+        //     snake = new Snake(vec.toArray(), grad, alpha, beta, certainty);
+        //     snake.runGDA(gamma);
+        //     started = true;
+        // }
 
-        if( mousePressed ) {
-            float x = grad.getWidth() *  ( ((float)mouseX) / ((float)iwidth) );
-            float y = grad.getHeight() * ( ((float)mouseY) / ((float)iheight) );
-            if( x != lastx && y != lasty ) {
-                Vector val = grad.getAt(x, y);
-                System.out.print(x + ", " + y + "\t=>\t");
-                val.printVector();
-                lastx = x;
-                lasty = y;
+        // if( started )
+        //     snake.draw();
+        if( vec.size() > 0 ) {
+            Vector last_pos = vec.get(0);
+            stroke(0,255,0);
+            for( int i = 1; i < vec.size(); ++i) {
+                Vector pos = vec.get(i);
+                line(last_pos.getComponent(0), last_pos.getComponent(1), pos.getComponent(0), pos.getComponent(1));
+                last_pos = pos;
             }
+            if( started )
+                line(last_pos.getComponent(0), last_pos.getComponent(1), vec.get(0).getComponent(0), vec.get(0).getComponent(1));
         }
-
-//      image( img[index], 0, 0, iwidth, iheight);
-//      hist[index].draw(iwidth, iheight);
     }
 }

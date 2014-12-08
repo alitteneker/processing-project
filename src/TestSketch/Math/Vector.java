@@ -3,7 +3,7 @@ package TestSketch.Math;
 public class Vector {
     protected float[] data;
     
-    public Vector( float[] set ) {
+    public Vector( float... set) {
         data = set;
     }
     public Vector( int size ) {
@@ -54,10 +54,9 @@ public class Vector {
         return new Vector( addArray( b.getData() ) );
     }
     public Vector addEquals(Vector b) {
-        addEquals(b, 1);
-        return this;
+        return addEquals(1,b);
     }
-    public Vector addEquals(Vector b, float scale) {
+    public Vector addEquals(float scale, Vector b) {
         int size = Math.min(b.getSize(), getSize());
         for( int i = 0; i < size; ++i )
             data[i] += b.getComponent(i) * scale;

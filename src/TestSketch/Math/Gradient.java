@@ -135,10 +135,10 @@ public class Gradient {
         maxX = MathTools.minMax(maxX, 0, width - 1);
         maxY = MathTools.minMax(maxY, 0, height - 1);
 
-        ret.addEquals(getAt(minX, minY), (1 - x + minX) * (1 - y + minY));
-        ret.addEquals(getAt(minX, maxY), (1 - x + minX) * (1 - maxY + y));
-        ret.addEquals(getAt(maxX, minY), (1 - maxX + x) * (1 - y + minY));
-        ret.addEquals(getAt(maxX, maxY), (1 - maxX + x) * (1 - maxY + y));
+        ret.addEquals((1 - x + minX) * (1 - y + minY), getAt(minX, minY));
+        ret.addEquals((1 - x + minX) * (1 - maxY + y), getAt(minX, maxY));
+        ret.addEquals((1 - maxX + x) * (1 - y + minY), getAt(maxX, minY));
+        ret.addEquals((1 - maxX + x) * (1 - maxY + y), getAt(maxX, maxY));
 
         return ret;
     }

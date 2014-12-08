@@ -192,6 +192,13 @@ public class MathTools {
     public static float distance( float x1, float y1, float x2, float y2 ) {
         return distance( x1-x2, y1-y2 );
     }
+    public static float distance(Vector a, Vector b) {
+        float ret = 0;
+        int len = Math.min(a.getSize(), b.getSize());
+        for( int i = 0; i < len; ++i )
+            ret += square(a.getComponent(i)-b.getComponent(i));
+        return sqrt(ret);
+    }
     public static float distance( float[] point ) {
         float sum = 0;
         for( int i = 0; i < point.length; ++i )
