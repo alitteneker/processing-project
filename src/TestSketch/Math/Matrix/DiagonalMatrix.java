@@ -86,13 +86,14 @@ public class DiagonalMatrix extends Matrix {
         else
             return super.multiply(other);
     }
-    public void multiplyEquals(Matrix other) {
+    public Matrix multiplyEquals(Matrix other) {
         if( !other.isDiagonal() )
             throw new IllegalArgumentException("Cannot save product of diagonal and non-diagonal matrix in diagonal matrix.");
         if( getWidth() != other.getHeight() )
             throw new IllegalArgumentException("Matrices are not of compatible sizes.");
         for( int i = 0; i < height; ++i )
             data[i] *= other.getValue(i, i);
+        return this;
     }
     public Matrix add(Matrix other) {
         if( width != other.getWidth() || height != other.getHeight() )
@@ -106,13 +107,14 @@ public class DiagonalMatrix extends Matrix {
         else
             return super.add(other);
     }
-    public void addEquals(Matrix other) {
+    public Matrix addEquals(Matrix other) {
         if( !other.isDiagonal() )
             throw new IllegalArgumentException("Cannot save sum of diagonal and non-diagonal matrix in diagonal matrix.");
         if( getWidth() != other.getHeight() )
             throw new IllegalArgumentException("Matrices are not of compatible sizes.");
         for( int i = 0; i < height; ++i )
             data[i] += other.getValue(i, i);
+        return this;
     }
     public Matrix toFullMatrix() {
         Matrix ret = new Matrix(width, height);

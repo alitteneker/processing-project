@@ -79,8 +79,13 @@ public class KernelUtil {
     }
     public static MonochromeKernel[] buildSobel(PApplet applet) {
         float[][] data = normalizeKernelData(new float[][]{{ -1, -2, -1 },{ 0, 0, 0 },{ 1, 2, 1 }});
-        MonochromeKernel x = new MonochromeKernel(data, applet);
-        return new MonochromeKernel[] { x, (MonochromeKernel)x.transpose(false) };
+        MonochromeKernel y = new MonochromeKernel(data, applet);
+        return new MonochromeKernel[] { (MonochromeKernel)y.transpose(false), y };
+    }
+    public static MonochromeKernel[] buildGradientSet(PApplet applet) {
+        float[][] data = normalizeKernelData(new float[][]{{ 0, 0, 0 },{ 0, -1, 0 },{ 0, 1, 0 }});
+        MonochromeKernel y = new MonochromeKernel(data, applet);
+        return new MonochromeKernel[] { (MonochromeKernel)y.transpose(false), y };
     }
     
     public static Kernel combineKernels(Kernel a, Kernel b) {

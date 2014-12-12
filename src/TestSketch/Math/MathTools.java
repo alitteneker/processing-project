@@ -214,6 +214,9 @@ public class MathTools {
             point[i] *= scale;
         return point;
     }
+    public static Vector randomVector(float len) {
+        return new Vector( len * (float)( Math.random() - 0.5 ) * 2, len * (float)( Math.random() - 0.5 ) * 2 );
+    }
     public static float invert(float val) {
         if( val != 0 )
             val = 1f / val;

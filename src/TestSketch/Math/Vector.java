@@ -53,6 +53,9 @@ public class Vector {
     public Vector add(Vector b) {
         return new Vector( addArray( b.getData() ) );
     }
+    public Vector add(float scale, Vector b) {
+        return new Vector( addArray( b.getData(), scale ) );
+    }
     public Vector addEquals(Vector b) {
         return addEquals(1,b);
     }

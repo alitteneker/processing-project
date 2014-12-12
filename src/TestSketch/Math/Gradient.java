@@ -150,6 +150,11 @@ public class Gradient {
     public float getLengthAt(int x, int y) {
         return getAt(x, y).getLength();
     }
+    public void scale(float scale) {
+        for( int i = 0; i < data.length; ++i )
+            for( int j = 0; j < data[i].length; ++j )
+                data[i][j] *= scale;
+    }
     public float[] toFloatPixels() {
         float[] ret = new float[width * height];
         for( int y = 0; y < height; ++y )

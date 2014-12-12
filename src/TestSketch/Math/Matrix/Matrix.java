@@ -48,10 +48,10 @@ public class Matrix {
         return height;
     }
     public int getIndex(int i, int j) {
-        return MathTools.minMax( i * width + j, 0, width * height - 1 );
+        return MathTools.minMax( i * height + j, 0, width * height - 1 );
     }
     public int getSafeIndex(int i, int j) {
-        return MathTools.minMax( i, 0, width ) * width + MathTools.minMax( j, 0, height );
+        return MathTools.minMax( i, 0, height-1 ) * width + MathTools.minMax( j, 0, width );
     }
     public float getValueAtIndex(int ind) {
         if( ind < 0 || ind >= width * height)
@@ -199,11 +199,11 @@ public class Matrix {
     }
     public Matrix multiply(float val) {
         int width = getWidth(), height = getHeight();
-        float[] newData = new float[width * height];
+        Matrix ret = new Matrix(width, height);
         for( int i = 0; i < height; ++i )
             for( int j = 0; j < width; ++j )
-                newData[i] = getValue(i,j) * val;
-        return new Matrix(newData, width, height);
+                ret.setValue( getValue(i,j) * val, i, j );
+        return ret;
     }
     public void multiplyEquals(float val) {
         for( int i = 0; i < data.length; ++i )
@@ -220,7 +220,7 @@ public class Matrix {
                     data[ b + i * newWidth ] += getValue(i, j) * other.getValue(j, b);
         return new Matrix(data, newWidth, newHeight);
     }
-    public void multiplyEquals(Matrix other) {
+    public Matrix multiplyEquals(Matrix other) {
         if( getWidth() != other.getHeight() )
             throw new IllegalArgumentException("Matrices are not of compatible sizes.");
         int newWidth = other.getWidth(), newHeight = getHeight(), comps = getWidth();
@@ -230,6 +230,7 @@ public class Matrix {
                 for( int b = 0; b < newWidth; ++b )
                     data[  b + i * newWidth ] += getValue(i, j) * other.getValue(j, b);
         setData(data, newWidth, newHeight);
+        return this;
     }
     public Matrix add(Matrix other) {
         int width = getWidth(), height = getHeight();
@@ -241,13 +242,18 @@ public class Matrix {
                 data[ j + i * width ] = getValue(i,j) + other.getValue(i,j);
         return new Matrix(data, width, height);
     }
-    public void addEquals(Matrix other) {
+    public Matrix addEquals(Matrix other) {
         int width = getWidth(), height = getHeight();
         if( width != other.getWidth() || height != other.getHeight() )
             throw new IllegalArgumentException("Matrices are not of compatible sizes.");
         for( int i = 0; i < getHeight(); ++i )
             for( int j = 0; j < getWidth(); ++j )
                 setValue( getValue(i, j) + other.getValue(i,j), i, j );
+        return this;
+    }
+    public Matrix addEquals(float val, int i, int j) {
+        setValue(getValue(i,j) + val, i, j);
+        return this;
     }
     public DiagonalMatrix invertDiagonal() {
         if( !isDiagonal() )
@@ -393,8 +399,10 @@ public class Matrix {
     }
     public void printMatrix() {
         for( int i = 0; i < height; ++i ) {
-            for( int j = 0; j < width; ++j )
-                System.out.print( getValue(i, j) + "\t" );
+            for( int j = 0; j < width; ++j ) {
+                float val = getValue(i, j);
+                System.out.print( ( MathTools.abs(val) > 0.00001 ? val : 0 ) + "\t" );
+            }
             System.out.println();
         }
         System.out.println();

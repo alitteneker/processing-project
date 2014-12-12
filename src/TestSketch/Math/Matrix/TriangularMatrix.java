@@ -135,7 +135,7 @@ public class TriangularMatrix extends Matrix {
         else
             return super.multiply(other);
     }
-    public void multiplyEquals(Matrix other) {
+    public Matrix multiplyEquals(Matrix other) {
         if( !other.isTechnicalTriangular() )
             throw new IllegalArgumentException("Cannot save product of triangular and non-triangular matrix in triangular matrix.");
         if( other.isTechnicalUpperTriangular() != isTechnicalUpperTriangular() )
@@ -149,6 +149,7 @@ public class TriangularMatrix extends Matrix {
                     if( ( i < j == isUpper || i == j ) && ( j < b == isUpper || j == b ) )
                         newData[getSafeIndex(i,j)] += getValue(i, j) * other.getValue(j, b);
         setData(newData);
+        return this;
     }
     public Matrix add(Matrix other) {
         if( width != other.getWidth() || height != other.getHeight() )
@@ -164,7 +165,7 @@ public class TriangularMatrix extends Matrix {
         else
             return super.add(other);
     }
-    public void addEquals(Matrix other) {
+    public Matrix addEquals(Matrix other) {
         if( !other.isTechnicalTriangular() )
             throw new IllegalArgumentException("Cannot save sum of triangular and non-triangular matrix in triangular matrix.");
         if( other.isTechnicalUpperTriangular() != isTechnicalUpperTriangular() )
@@ -175,6 +176,7 @@ public class TriangularMatrix extends Matrix {
             for( int j = 0; j < width; ++j )
                 if( i < j == isUpper || i == j )
                     setValue( getValue(i, j) + other.getValue(i, j), i, j );
+        return this;
     }
     public Matrix toFullMatrix() {
         Matrix ret = new Matrix(width, height);
