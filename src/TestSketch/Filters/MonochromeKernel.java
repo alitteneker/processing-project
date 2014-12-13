@@ -2,7 +2,6 @@ package TestSketch.Filters;
 
 import TestSketch.Math.MathTools;
 import TestSketch.Math.MonoOperator;
-import TestSketch.Math.Vector;
 import processing.core.PApplet;
 
 public class MonochromeKernel extends Kernel implements MonoOperator {
@@ -59,19 +58,5 @@ public class MonochromeKernel extends Kernel implements MonoOperator {
             }
         }
         return val;
-    }
-    public float getPixelValueLength(float[][] input, int x, int y, int loca, int width, int height) {
-        int limit = this.width / 2, mx, my, locb;
-        float kv;
-        Vector val = new Vector(input[0].length);
-        for( mx = -limit; mx <= limit; ++mx ) {
-            for( my = -limit; my <= limit; ++my ) {
-                locb = MathTools.minMax(x + mx, 0, width - 1) + MathTools.minMax(y + my, 0, height - 1) * width;
-                kv = data[ limit + mx + this.width * ( limit + my ) ];
-                for( int i = 0; i < input[0].length; ++i )
-                    val.setComponent( input[locb][i] * kv, i );
-            }
-        }
-        return val.getLength();
     }
 }

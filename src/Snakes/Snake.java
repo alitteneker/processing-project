@@ -157,26 +157,33 @@ public class Snake {
         inprogress = new Thread() {
             public void run() {
                 Matrix multiplier = buildMultiplier(gamma);
-                int iteration = 0;
-                float last_energy = 0;
+                int iteration = 0, last_iteration = 0;
                 int max_iterations = 100000;
+                float last_energy = 0;
                 
-                long start = System.currentTimeMillis();
-                System.out.println("Starting GDA with "+size+" control points, initial energy of "+last_energy+", and inital dEnergy of "+getScalarDeltaEnergy());
-                while( iteration < max_iterations && getScalarDeltaEnergy() > 0.0f /* && MathTools.abs(last_energy-getScalarEnergy()) > 0 */ ) {
+                long start = System.currentTimeMillis(), time = System.currentTimeMillis();
+                System.out.println("Starting GDA with "+size+" control points, initial energy of "+getScalarEnergy()+", and inital dEnergy of "+getScalarDeltaEnergy());
+                while( iteration < max_iterations && getScalarDeltaEnergy() > 0.0f && MathTools.abs(last_energy-getScalarEnergy()) > 0 ) {
                     last_energy = getScalarEnergy();
-                    long time = System.currentTimeMillis();
                     
-                    positions.addEquals(forces.multiply(gamma * certainty)).multiplyEquals(multiplier);
+//                    positions.addEquals(forces.multiply(gamma * certainty)).multiplyEquals(multiplier);
+                    for( int i = 0; i < size; ++i ) {
+                        Vector delt = getDeltaEnergy(i).multiplyEquals( -gamma );
+                        setPosition( i, getPosition(i).addEquals(delt) );
+                    }
                     clipPositions();
-                    
                     updateAllForces();
                     updateAllEnergy();
                     
                     iteration++;
-                    float next_energy = getScalarEnergy();
-                    applet.redraw();
-                    System.out.println("Iteration " + iteration + " took " + ( System.currentTimeMillis() - time ) + " with energy " + next_energy + " and delta_energy " + getScalarDeltaEnergy() );
+                    if( System.currentTimeMillis() - time > 40 ) {
+                        System.out.println("Iterations " + last_iteration + "-" + iteration + "(" + (iteration-last_iteration) + ")"
+                                + " took " + ( System.currentTimeMillis() - time )
+                                + " with energy " + getScalarEnergy()
+                                + " and delta_energy " + getScalarDeltaEnergy() );
+                        last_iteration = iteration;
+                        time = System.currentTimeMillis();
+                    }
                 }
                 System.out.println("GDA finished after " + iteration + " iterations and " + ( System.currentTimeMillis() - start ) + "ms.");
             }
@@ -252,7 +259,7 @@ public class Snake {
         
         ret.addEquals( alpha, getPosition(i + 1).addEquals( -1, pos ).squareEquals().multiplyEquals( 0.5f ) );
         ret.addEquals( beta, getPosition(i - 1).addEquals( -2, pos ).addEquals( getPosition(i + 1) ).squareEquals().multiplyEquals( 0.5f ) );
-        ret.addEquals( certainty, getForceAtPosition(i).squareEquals().multiplyEquals(0.5f) );
+        ret.addEquals( -certainty, getForceAtPosition(i).squareEquals().multiplyEquals(0.5f) );
         
         return ret;
     }
