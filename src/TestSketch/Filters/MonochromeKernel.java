@@ -40,18 +40,22 @@ public class MonochromeKernel extends Kernel implements MonoOperator {
         }
         return new MonochromeKernel(data, height, width, this.applet);
     }
-    protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height) {
-        float val = normalizeValue( getPixelValue(input, x, y, loca, width, height) );
+    protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height, boolean normalize) {
+        float val = getPixelValue(input, x, y, loca, width, height);
+        if( normalize )
+            val = normalizeValue(val);
         for( int i = 0; i < out.length; ++i )
             out[i] = val;
     }
     public float getPixelValue(float[][] input, int x, int y, int loca, int width, int height) {
-        int limit = this.width / 2, mx, my, locb;
+        int mx, my, locb;
         float kv, val = 0;
-        for( mx = -limit; mx <= limit; ++mx ) {
-            for( my = -limit; my <= limit; ++my ) {
+        int limitW = this.width / 2,
+            limitH = this.height / 2;
+        for( mx = -limitW; mx <= limitW; ++mx ) {
+            for( my = -limitH; my <= limitH; ++my ) {
                 locb = MathTools.minMax(x + mx, 0, width - 1) + MathTools.minMax(y + my, 0, height - 1) * width;
-                kv = data[ limit + mx + this.width * ( limit + my ) ];
+                kv = data[ limitW + mx + this.width * ( limitH + my ) ];
                 val += monobefore
                         ? ( MathTools.dotProduct(weights, input[locb]) * kv )
                         : MathTools.dotProduct(weights, MathTools.product(input[locb], kv));

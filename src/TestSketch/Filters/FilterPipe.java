@@ -63,7 +63,7 @@ public class FilterPipe extends Filter {
             Filter next = queue.get(i);
             if( next.getClass().equals(last.getClass()) ) {
                 // TODO: magic number here, what's the performance relationship?
-                if( next instanceof Kernel && ( ((Kernel)next).getWidth() + ((Kernel)last).getWidth() - 1) * (((Kernel)next).getHeight() + ((Kernel)last).getHeight() - 1) < 125 ) {
+                if( next instanceof Kernel && ( ((Kernel)next).getWidth() + ((Kernel)last).getWidth() - 1) * (((Kernel)next).getHeight() + ((Kernel)last).getHeight() - 1) < 49 ) {
                     Kernel k = KernelUtil.combineKernels((Kernel)next, (Kernel)last);
                     replace( i, k );
                     remove( --i );
@@ -77,11 +77,11 @@ public class FilterPipe extends Filter {
             System.out.println("Compressed " + size + " kernels away (" + size() + " remaining) in " + (System.currentTimeMillis() - time) + " ms.");
         this.compressed = true;
     }
-    public float[][] applyToPixels(float[][] pixels, int width, int height) {
+    public float[][] applyToPixels(float[][] pixels, int width, int height, boolean normalize) {
         long time = System.currentTimeMillis();
         float[][] ret = pixels.clone();
         for( int i = 0; i < size(); ++i )
-            ret = get(i).applyToPixels(ret, width, height);
+            ret = get(i).applyToPixels(ret, width, height, normalize);
         System.out.println("Filter Pipe Time: " + ( System.currentTimeMillis() - time ));
         return ret;
     }

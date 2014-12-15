@@ -3,10 +3,12 @@ package Snakes;
 import java.util.ArrayList;
 
 import processing.core.PApplet;
+import processing.core.PImage;
 import TestSketch.Math.Gradient;
 import TestSketch.Math.MathTools;
 import TestSketch.Math.Vector;
 import TestSketch.Math.Matrix.Matrix;
+import TestSketch.Tools.KernelUtil;
 
 public class Snake {
     Matrix positions;
@@ -17,20 +19,26 @@ public class Snake {
     int size;
     float alpha, beta, certainty;
     Thread inprogress;
+    boolean running = false;
     
-    public Snake( Vector[] vec, Gradient grad, float alpha, float beta, float certainty) {
-        this.alpha = alpha;
-        this.beta = beta;
-        this.certainty = certainty;
+    PImage back = null;
+    
+    // tau is tension, roh is rigidity
+    public Snake( Vector[] vec, Gradient grad, float tau, float roh, float certainty) {
         this.grad = grad;
+        setConstants( tau, roh, certainty );
         initialize(vec);
     }
-    public Snake( ArrayList<Vector> vec, Gradient grad, float alpha, float beta, float certainty) {
-        this.alpha = alpha;
-        this.beta = beta;
-        this.certainty = certainty;
+    public Snake( ArrayList<Vector> vec, Gradient grad, float tau, float roh, float certainty) {
         this.grad = grad;
+        setConstants( tau, roh, certainty );
         initialize(vec);
+    }
+    
+    public void setConstants( float tau, float roh, float certainty ) {
+        this.alpha = roh * tau;
+        this.beta = roh * ( 1 - tau );
+        this.certainty = certainty;
     }
     
     public void initialize( ArrayList<Vector> vec ) {
@@ -54,6 +62,167 @@ public class Snake {
         clipPositions();
         updateAllForces();
         updateAllEnergy();
+    }
+    
+    public void updateAllForces() {
+        for( int i = 0; i < size; ++i )
+            updateForce(i);
+    }
+    
+    public void updateForce(int i) {
+        i = getSafeIndex(i);
+        Vector val = getForceAtPosition(i);
+        forces.setValue(val.getComponent(0), 0, i);
+        forces.setValue(val.getComponent(1), 1, i);
+    }
+    
+    public Vector getForceAtPosition(int i) {
+        i = getSafeIndex(i);
+        Vector ret = getForceAtPosition( positions.getValue(0, i), positions.getValue(1, i) );
+        if( ret == null )
+            ret = new Vector();
+        return ret;
+    }
+    
+    public Vector getForceAtPosition(float x, float y) {
+        return grad.getAt( x, y );
+    }
+    
+    public int getSafeIndex(int i) {
+        while( i < 0 )
+            i += size;
+        while( i >= size )
+            i -= size;
+        return i;
+    }
+    
+    public Vector getPosition(int i) {
+        i = getSafeIndex(i);
+        return new Vector( positions.getValue(0, i), positions.getValue(1, i) );
+    }
+    
+    public void setPosition(int i, Vector set) {
+        setPosition(i, set.getComponent(0), set.getComponent(1));
+    }
+    
+    public void clipPositions() {
+        float width = grad.getWidth()-1, height = grad.getHeight()-1;
+        for(int i = 0; i < size; ++i) {
+            Vector pos = getPosition(i);
+            if( pos.getComponent(0) < 0 || pos.getComponent(0) > width )
+                positions.setValue( MathTools.minMax( pos.getComponent(0), 0, width  ), 0, i);
+            if( pos.getComponent(1) < 0 || pos.getComponent(1) > height )
+                positions.setValue( MathTools.minMax( pos.getComponent(1), 0, height ), 1, i);
+        }
+    }
+
+    public void setPosition(int i, float x, float y) {
+        i = getSafeIndex(i);
+        positions.setValue(x, 0, i);
+        positions.setValue(y, 1, i);
+        updateForce(i);
+        updateEnergy(i, false);
+        updateDeltaEnergy(i, false);
+    }
+    
+    public void updateAllEnergy() {
+        for( int i = 0; i < size; ++i ) {
+            updateEnergy(i);
+            updateDeltaEnergy(i);
+        }
+    }
+    public void updateEnergy(int i) {
+        updateEnergy(i, true);
+    }
+    public void updateEnergy(int i, boolean single) {
+        i = getSafeIndex(i);
+        energy[i] = calcEnergy(i);
+        if( !single ) {
+            updateEnergy(i+1, true);
+            updateEnergy(i-1, true);
+        }
+    }
+    public void updateDeltaEnergy(int i) {
+        updateDeltaEnergy(i, true);
+    }
+    public void updateDeltaEnergy(int i, boolean single) {
+        i = getSafeIndex(i);
+        delta_energy[i] = calcDeltaEnergy(i);
+        if( !single ) {
+            updateDeltaEnergy(i+2, true);
+            updateDeltaEnergy(i+1, true);
+            updateDeltaEnergy(i-1, true);
+            updateDeltaEnergy(i-2, true);
+        }
+    }
+    
+    public float getScalarEnergy() {
+        Vector sum = new Vector();
+        for( int i = 0; i < size; ++i )
+            sum.addEquals( getEnergy(i) );
+        return sum.getLength();
+    }
+    
+    public Vector getEnergy(int i) {
+        i = getSafeIndex(i);
+        if( energy[i] != null )
+            return energy[i];
+        energy[i] = calcDeltaEnergy(i);
+        return energy[i];
+    }
+    
+    public Vector calcEnergy(int i) {
+        i = getSafeIndex(i);
+        Vector ret = new Vector();
+
+        ret.addEquals( alpha, getPosition(i + 1).addEquals( -1, getPosition(i) ).squareEquals().multiplyEquals( 0.5f ) );
+        ret.addEquals( beta, getPosition(i - 1).addEquals( -2, getPosition(i) ).addEquals( getPosition(i + 1) ).squareEquals().multiplyEquals( 0.5f ) );
+        ret.addEquals( certainty, getForceAtPosition(i).squareEquals().multiplyEquals(0.5f) );
+
+        return ret;
+    }
+    
+    // get the energy of the system if we move the given control point to this new position
+    public float getScalarEnergyIf(int i, Vector pos) {
+        i = getSafeIndex(i);
+        Vector sum = new Vector();
+        for( int ind = 0; ind < size; ++ind )
+            sum.addEquals( ind == i ? calcEnergyIf(i, pos) : getEnergy(i) );
+        return sum.getLength();
+    }
+    public Vector calcEnergyIf(int i, Vector pos) {
+        i = getSafeIndex(i);
+        Vector ret = new Vector();
+        
+        ret.addEquals( alpha, getPosition(i + 1).addEquals( -1, pos ).squareEquals().multiplyEquals( 0.5f ) );
+        ret.addEquals( beta, getPosition(i - 1).addEquals( -2, pos ).addEquals( getPosition(i + 1) ).squareEquals().multiplyEquals( 0.5f ) );
+        ret.addEquals( certainty, getForceAtPosition(i).squareEquals().multiplyEquals(0.5f) );
+        
+        return ret;
+    }
+    
+    public float getScalarDeltaEnergy() {
+        Vector sum = new Vector();
+        for( int i = 0; i < size; ++i )
+            sum.addEquals( getDeltaEnergy(i) );
+        return sum.getLength();
+    }
+    public Vector getDeltaEnergy(int i) {
+        i = getSafeIndex(i);
+        if( delta_energy[i] != null )
+            return delta_energy[i];
+        delta_energy[i] = calcDeltaEnergy(i);
+        return delta_energy[i];
+    }
+    public Vector calcDeltaEnergy(int i) {
+        i = getSafeIndex(i);
+        Vector ret = new Vector();
+        
+        ret.addEquals( alpha, getPosition(i-1).addEquals(-2,getPosition(i)).addEquals(getPosition(i+1)).multiplyEquals(-1) );
+        ret.addEquals( beta, getPosition(i-2).addEquals(-4,getPosition(i-1)).addEquals(6,getPosition(i)).addEquals(-4,getPosition(i+1)).addEquals(getPosition(i+2)) );
+        ret.addEquals( certainty, getForceAtPosition(i) );
+        
+        return ret;
     }
     
     public Matrix buildMultiplier(float gamma) {
@@ -91,204 +260,107 @@ public class Snake {
         Matrix ret = multiplier.invert();
         if( ret == null )
             throw new IllegalArgumentException("Unable to invert matrix for GDA.");
-        System.out.println("Is multiplier symmetric: " + multiplier.isSymmetric());
         return ret;
     }
     
-    public void updateAllForces() {
-        for( int i = 0; i < size; ++i )
-            updateForce(i);
-    }
-    
-    public void updateForce(int i) {
-        i = getSafeIndex(i);
-        Vector val = getForceAtPosition(i);
-        forces.setValue(val.getComponent(0), 0, i);
-        forces.setValue(val.getComponent(1), 1, i);
-    }
-    
-    public Vector getForceAtPosition(int i) {
-        i = getSafeIndex(i);
-        return getForceAtPosition( positions.getValue(0, i), positions.getValue(1, i) );
-    }
-    
-    public Vector getForceAtPosition(float x, float y) {
-        return grad.getAt( x, y );
-    }
-    
-    public int getSafeIndex(int i) {
-        while( i < 0 )
-            i += size;
-        while( i >= size )
-            i -= size;
-        return i;
-    }
-    
-    public Vector getPosition(int i) {
-        i = getSafeIndex(i);
-        return new Vector( positions.getValue(0, i), positions.getValue(1, i) );
-    }
-    
-    public void setPosition(int i, Vector set) {
-        setPosition(i, set.getComponent(0), set.getComponent(1));
-    }
-    
-    public void clipPositions() {
-        float width = grad.getWidth()-1, height = grad.getHeight()-1;
-        for(int i = 0; i < size; ++i) {
-            Vector pos = getPosition(i);
-            if( pos.getComponent(0) < 0 || pos.getComponent(0) > width-1 )
-                positions.setValue( MathTools.minMax( pos.getComponent(0), 0, width  ), 0, i);
-            if( pos.getComponent(1) < 0 || pos.getComponent(1) > height )
-                positions.setValue( MathTools.minMax( pos.getComponent(1), 0, height ), 1, i);
-        }
-    }
-
-    public void setPosition(int i, float x, float y) {
-        i = getSafeIndex(i);
-        positions.setValue(x, 0, i);
-        positions.setValue(y, 1, i);
-        updateForce(i);
-        updateEnergy(i, false);
-        updateDeltaEnergy(i, false);
-    }
-    
     public void runGDA(final float gamma, final PApplet applet) {
+        runGDA(gamma, false, applet);
+    }
+    public void runGDA(final float gamma, final boolean silent, final PApplet applet) {
+
+        // We can do GDA either with a matrix or with vector math
+        final boolean use_matrix = false;
+        Matrix multiplier = null;
+        if( use_matrix )
+            multiplier = buildMultiplier(gamma);
+
+        int iteration = 0, last_iteration = 0;
+        final int max_iterations = 100000;
+        float last_energy = 0;
+        
+        long start = System.currentTimeMillis(), time = System.currentTimeMillis();
+        if( !silent )
+            System.out.println("Starting GDA with "+size+" control points, initial energy of "+getScalarEnergy()
+                            + ", and inital dEnergy of "+getScalarDeltaEnergy() );
+
+        while( iteration < max_iterations ) {
+
+            if( use_matrix )
+                positions.addEquals(forces.multiply(gamma * certainty)).multiplyEquals(multiplier);
+            else
+                for( int i = 0; i < size; ++i ) {
+                    Vector delt = getDeltaEnergy(i).multiplyEquals( -gamma );
+                    setPosition( i, getPosition(i).addEquals(delt) );
+                }
+
+            clipPositions();
+            updateAllForces();
+            updateAllEnergy();
+            
+            iteration++;
+            if( System.currentTimeMillis() - time > 40 ) {
+                applet.redraw();
+                if( !silent )
+                    System.out.println("Iterations " + last_iteration + "-" + iteration + "(" + (iteration-last_iteration) + ")"
+                        + " took " + ( System.currentTimeMillis() - time )
+                        + " with energy " + getScalarEnergy() + "(" + ( last_energy-getScalarEnergy() ) + ")"
+                        + " and delta_energy " + getScalarDeltaEnergy() );
+                last_iteration = iteration;
+                time = System.currentTimeMillis();
+                if( getScalarDeltaEnergy() == 0.0f || MathTools.abs(last_energy-getScalarEnergy()) == 0.0f )
+                    break;
+                else
+                    last_energy = getScalarEnergy();
+            }
+        }
+        float seconds = (float)( System.currentTimeMillis() - start ) / 1000f;
+        if( !silent )
+            System.out.println("GDA finished after " + iteration + " iterations and " + seconds + " seconds, and "
+                            + ((float)iteration/seconds) + " iterations/second.");
+    }
+    public void runGDAThread(final float gamma, final PApplet applet) {
+        running = true;
         inprogress = new Thread() {
             public void run() {
-                Matrix multiplier = buildMultiplier(gamma);
-                int iteration = 0, last_iteration = 0;
-                int max_iterations = 100000;
-                float last_energy = 0;
-                
-                long start = System.currentTimeMillis(), time = System.currentTimeMillis();
-                System.out.println("Starting GDA with "+size+" control points, initial energy of "+getScalarEnergy()+", and inital dEnergy of "+getScalarDeltaEnergy());
-                while( iteration < max_iterations && getScalarDeltaEnergy() > 0.0f && MathTools.abs(last_energy-getScalarEnergy()) > 0 ) {
-                    last_energy = getScalarEnergy();
-                    
-//                    positions.addEquals(forces.multiply(gamma * certainty)).multiplyEquals(multiplier);
-                    for( int i = 0; i < size; ++i ) {
-                        Vector delt = getDeltaEnergy(i).multiplyEquals( -gamma );
-                        setPosition( i, getPosition(i).addEquals(delt) );
-                    }
-                    clipPositions();
-                    updateAllForces();
-                    updateAllEnergy();
-                    
-                    iteration++;
-                    if( System.currentTimeMillis() - time > 40 ) {
-                        System.out.println("Iterations " + last_iteration + "-" + iteration + "(" + (iteration-last_iteration) + ")"
-                                + " took " + ( System.currentTimeMillis() - time )
-                                + " with energy " + getScalarEnergy()
-                                + " and delta_energy " + getScalarDeltaEnergy() );
-                        last_iteration = iteration;
-                        time = System.currentTimeMillis();
-                    }
-                }
-                System.out.println("GDA finished after " + iteration + " iterations and " + ( System.currentTimeMillis() - start ) + "ms.");
+                runGDA(gamma, true, applet);
+                running = false;
             }
         };
         inprogress.start();
     }
     
-    public void updateAllEnergy() {
-        for( int i = 0; i < size; ++i ) {
-            updateEnergy(i);
-            updateDeltaEnergy(i);
-        }
-    }
-    public void updateEnergy(int i) {
-        updateEnergy(i, true);
-    }
-    public void updateEnergy(int i, boolean single) {
-        i = getSafeIndex(i);
-        energy[i] = calcEnergy(i);
-        if( !single ) {
-            updateEnergy(i+1, true);
-            updateEnergy(i-1, true);
-        }
-    }
-    public void updateDeltaEnergy(int i) {
-        updateDeltaEnergy(i, true);
-    }
-    public void updateDeltaEnergy(int i, boolean single) {
-        i = getSafeIndex(i);
-        delta_energy[i] = calcDeltaEnergy(i);
-        if( !single ) {
-            updateDeltaEnergy(i+2, true);
-            updateDeltaEnergy(i+1, true);
-            updateDeltaEnergy(i-1, true);
-            updateDeltaEnergy(i-2, true);
-        }
-    }
-    // get the energy of the system if we move the given control point to this new position
-    public float getScalarEnergyIf(int i, Vector pos) {
-        i = getSafeIndex(i);
-        Vector sum = new Vector();
-        for( int ind = 0; ind < size; ++ind )
-            sum.addEquals( ind == i ? calcEnergyIf(i, pos) : getEnergy(i) );
-        return sum.getLength();
-    }
-    public float getScalarEnergy() {
-        Vector sum = new Vector();
-        for( int i = 0; i < size; ++i )
-            sum.addEquals( getEnergy(i) );
-        return sum.getLength();
-    }
-    
-    public Vector getEnergy(int i) {
-        i = getSafeIndex(i);
-        if( energy[i] != null )
-            return energy[i];
-        energy[i] = calcDeltaEnergy(i);
-        return energy[i];
-    }
-    public Vector calcEnergy(int i) {
-        i = getSafeIndex(i);
-        Vector ret = new Vector();
+    public void runContinuation(final float gamma, final int filter_size, final float dSigma, final int steps, final PApplet applet) {
 
-        ret.addEquals( alpha, getPosition(i + 1).addEquals( -1, getPosition(i) ).squareEquals().multiplyEquals( 0.5f ) );
-        ret.addEquals( beta, getPosition(i - 1).addEquals( -2, getPosition(i) ).addEquals( getPosition(i + 1) ).squareEquals().multiplyEquals( 0.5f ) );
-        ret.addEquals( certainty, getForceAtPosition(i).squareEquals().multiplyEquals(0.5f) );
-
-        return ret;
+        Gradient full_grad = grad;
+        for( int i = 0; i < steps; ++i ) {
+            long time = System.currentTimeMillis();
+            
+            grad = ( i == steps - 1 )
+                    ? full_grad
+                    : full_grad.applyFilter( KernelUtil.buildGaussianBlurPipe(filter_size, (steps - (1 + i)) * dSigma, applet) );
+            back = null;
+            
+            runGDA(gamma, true, applet);
+            
+            System.out.println("Continuation step " + ( i + 1 ) + " finished in " + ( ( System.currentTimeMillis() - time ) / 1000f ) + " seconds.");
+        }
     }
-    public Vector calcEnergyIf(int i, Vector pos) {
-        i = getSafeIndex(i);
-        Vector ret = new Vector();
-        
-        ret.addEquals( alpha, getPosition(i + 1).addEquals( -1, pos ).squareEquals().multiplyEquals( 0.5f ) );
-        ret.addEquals( beta, getPosition(i - 1).addEquals( -2, pos ).addEquals( getPosition(i + 1) ).squareEquals().multiplyEquals( 0.5f ) );
-        ret.addEquals( -certainty, getForceAtPosition(i).squareEquals().multiplyEquals(0.5f) );
-        
-        return ret;
-    }
-    
-    public float getScalarDeltaEnergy() {
-        Vector sum = new Vector();
-        for( int i = 0; i < size; ++i )
-            sum.addEquals( getDeltaEnergy(i) );
-        return sum.getLength();
-    }
-    public Vector getDeltaEnergy(int i) {
-        i = getSafeIndex(i);
-        if( delta_energy[i] != null )
-            return delta_energy[i];
-        delta_energy[i] = calcDeltaEnergy(i);
-        return delta_energy[i];
-    }
-    public Vector calcDeltaEnergy(int i) {
-        i = getSafeIndex(i);
-        Vector ret = new Vector();
-        
-        ret.addEquals( alpha, getPosition(i-1).addEquals(-2,getPosition(i)).addEquals(getPosition(i+1)).multiplyEquals(-1) );
-        ret.addEquals( beta, getPosition(i-2).addEquals(-4,getPosition(i-1)).addEquals(6,getPosition(i)).addEquals(-4,getPosition(i+1)).addEquals(getPosition(i+2)) );
-        ret.addEquals( certainty, getForceAtPosition(i) );
-        
-        return ret;
+    public void runContinuationThread(final float gamma, final int filter_size, final float dSigma, final int steps, final PApplet applet) {
+        running = true;
+        inprogress = new Thread() {
+            public void run() {
+                runContinuation(gamma, filter_size, dSigma, steps, applet);
+                running = false;
+            }
+        };
+        inprogress.start();
     }
     
     public void draw( int width, int height, PApplet applet ) {
+        if( back == null )
+            back = grad.toImage(applet);
+        applet.image(back, 0, 0, width, height);
+        
         float scale_w = ((float)width)/((float)grad.getWidth()),
               scale_h = ((float)height)/((float)grad.getHeight());
         applet.stroke(255, 0, 0);
@@ -298,6 +370,12 @@ public class Snake {
             applet.line(scale_w * last_pos.getComponent(0), scale_h * last_pos.getComponent(1),
                         scale_w * pos.getComponent(0),      scale_h * pos.getComponent(1));
             last_pos = pos;
+        }
+        applet.noStroke();
+        applet.fill(0, 255, 0);
+        for( int i = 0; i < size; ++i ) {
+            Vector pos = getPosition(i);
+            applet.ellipse(scale_w * pos.getComponent(0), scale_h * pos.getComponent(1), 3, 3);
         }
     }
 }

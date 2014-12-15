@@ -11,7 +11,6 @@ public class Util {
         return x + ( y * width );
     }
     
-    // N.B.: THESE METHODs WILL NOT LOAD PIXEL DATA BEFORE BEGINNING
     public static int[] getPixels(int center_x, int center_y, int size, int[] pixels, int width, int height, PApplet applet) {
         int[] ret = new int[size*size];
         int limit = size/2;
@@ -88,12 +87,10 @@ public class Util {
     public static int toProcColor(float color, PApplet applet) {
         return applet.color(color);
     }
-    
-//    public static float[][] resizeImage(float[][] original, int oldWidth, int oldHeight, int newWidth, int newHeight) {
-//        float[][] ret = new float[newWidth * newHeight][original[0].length];
-//        float dWidth = (float)newWidth/(float)oldWidth,
-//                dHeight = (float)newHeight/(float)oldHeight;
-//        // TODO
-//        return ret;
-//    }
+    public static int[] greyToProcColor(float[] colors, PApplet applet) {
+        int[] ret = new int[colors.length];
+        for( int i = 0; i < colors.length; ++i )
+            ret[i] = toProcColor(colors[i], applet);
+        return ret;
+    }
 }

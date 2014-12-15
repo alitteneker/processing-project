@@ -21,5 +21,8 @@ public abstract class Filter {
     public PImage apply(PImage in) {
         return apply(in, false);
     }
-    public abstract float[][] applyToPixels(float[][] pixels, int width, int height);
+    public float[][] applyToPixels(float[][] pixels, int width, int height) {
+        return applyToPixels(pixels, width, height, true);
+    }
+    public abstract float[][] applyToPixels(float[][] pixels, int width, int height, boolean normalize);
 }

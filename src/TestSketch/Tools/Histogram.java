@@ -29,6 +29,10 @@ public class Histogram {
         this.applet = applet;
         processPixels(pixels);
     }
+    public Histogram(float[] pixels, PApplet applet) {
+        this.applet = applet;
+        processPixels(pixels);
+    }
     protected void initialize(int size) {
         this.mean = 0;
         this.stdev = 0;
@@ -69,6 +73,29 @@ public class Histogram {
         }
         this.stdev = (float) Math.sqrt( M2all / (float)(pixels.length - 1) );
         this.mean = meanall;
+    }
+    protected void processPixels(float[] pixels) {
+        if( pixels.length == 0 )
+            return;
+        initialize(1);
+        
+        float diff = Histogram.RANGE/(float)pixels.length;
+        
+        float meanall = 0;
+        float M2all = 0;
+
+        for( int i = 0; i < pixels.length; ++i ) {
+            float intensity = pixels[i];
+            float delta = intensity - meanall;
+            meanall += delta / (float)( i + 1 );
+            M2all += delta * (intensity - meanall);
+            
+            data[ (int)MathTools.minMax(intensity,0,data.length - 1) ][0] += diff;
+        }
+        this.stdev = (float) Math.sqrt( M2all / (float)(pixels.length - 1) );
+        this.stdevComponent[0] = this.stdev;
+        this.mean = meanall;
+        this.meanComponent[0] = meanall;
     }
     public float aggregate(float[] data) {
         return MathTools.length(data);

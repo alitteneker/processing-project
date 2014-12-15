@@ -217,6 +217,14 @@ public class MathTools {
     public static Vector randomVector(float len) {
         return new Vector( len * (float)( Math.random() - 0.5 ) * 2, len * (float)( Math.random() - 0.5 ) * 2 );
     }
+    public static int choose(int n, int k) {
+        if( n == 0 || n == k )
+            return 1;
+        float ret = 1;
+        for( int i = 1; i <= k; ++i )
+            ret *= (float)( n + 1 - i ) / (float)i;
+        return (int)ret;
+    }
     public static float invert(float val) {
         if( val != 0 )
             val = 1f / val;
@@ -227,6 +235,24 @@ public class MathTools {
     }
     public static float max(float a, float b) {
         return a > b ? a : b;
+    }
+    public static float max(float[] data) {
+        if( data.length == 0 )
+            return 0;
+        float ret = data[0];
+        for( int i = 1; i < data.length; ++i )
+            if( ret < data[i] )
+                ret = data[i];
+        return ret;
+    }
+    public static float min(float[] data) {
+        if( data.length == 0 )
+            return 0;
+        float ret = data[0];
+        for( int i = 1; i < data.length; ++i )
+            if( ret > data[i] )
+                ret = data[i];
+        return ret;
     }
     public static int floor(float val) {
         return (int)Math.floor((double)val);

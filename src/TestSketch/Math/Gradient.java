@@ -2,12 +2,24 @@ package TestSketch.Math;
 
 import processing.core.PApplet;
 import processing.core.PImage;
+import TestSketch.Filters.ContrastFilter;
+import TestSketch.Filters.Filter;
 import TestSketch.Tools.Util;
 
 public class Gradient {
     protected int width, height, components;
     protected float[][] data;
     
+    public Gradient(float [][] data, int width, int height) {
+        if( data.length == 0 || data[0].length == 0 )
+            throw new IllegalArgumentException("Cannot create gradient with no data.");
+        if( data.length != width * height )
+            throw new IllegalArgumentException("Input data is not compatible size to width and height.");
+        this.data = data;
+        this.width = width;
+        this.height = height;
+        this.components = data[0].length;
+    }
     public Gradient(float[][] pixels, int width, int height, MonoOperator[] operators) {
         setSize(width, height, operators.length);
         buildFromOperators(pixels, width, height, operators);
@@ -24,11 +36,9 @@ public class Gradient {
         if( this.width != width || this.height != height || this.components != operators.length )
             return false;
         int i,j;
-        for( i = 0; i < pixels.length; ++i ) {
-            for( j = 0; j < operators.length; ++j ) {
+        for( i = 0; i < pixels.length; ++i )
+            for( j = 0; j < operators.length; ++j )
                 data[i][j]= operators[j].getPixelValue(pixels, i%width, i/width, i, width, height);
-            }
-        }
         return true;
     }
     public Gradient( int width, int height, int components ) {
@@ -155,7 +165,7 @@ public class Gradient {
             for( int j = 0; j < data[i].length; ++j )
                 data[i][j] *= scale;
     }
-    public float[] toFloatPixels() {
+    public float[] getAllLengths() {
         float[] ret = new float[width * height];
         for( int y = 0; y < height; ++y )
             for( int x = 0; x < width; ++x )
@@ -163,16 +173,27 @@ public class Gradient {
         return ret;
     }
     public int[] toPixels(PApplet applet) {
-        float[] fdata = toFloatPixels();
+        float[] fdata = getAllLengths();
         int[] ret = new int[data.length];
         for( int i = 0; i < fdata.length; ++i )
-            ret[i] = Util.toProcColor(fdata[i], applet);
+            ret[i] = Util.toProcColor( MathTools.minMax(fdata[i], 0, 255), applet );
         return ret;
     }
     public PImage toImage(PApplet applet) {
         PImage out = applet.createImage(width, height, PApplet.RGB);
-        out.pixels = toPixels(applet);
+
+        float[] fdata = getAllLengths();
+        (new ContrastFilter(applet)).applyInline(fdata, false);
+        out.pixels = Util.greyToProcColor(fdata, applet);
         out.updatePixels();
+
         return out;
+    }
+    public Gradient applyFilter(Filter app) {
+        float[][] new_data = app.applyToPixels(data, width, height, false);
+        return new Gradient(new_data, width, height);
+    }
+    public void applyFilterInline(Filter app) {
+        setData(app.applyToPixels(data, width, height));
     }
 }

@@ -101,11 +101,11 @@ public class Kernel extends MultithreadedFilter {
     public int getMode() {
         return this.mode;
     }
-    public float[][] applyToPixels(float[][] pixels, int width, int height) {
+    public float[][] applyToPixels(float[][] pixels, int width, int height, boolean normalize) {
         if(!singleThreaded)
-            return super.applyToPixels(pixels, width, height);
+            return super.applyToPixels(pixels, width, height, normalize);
         int x, y, loca;
-        float[][] ret = new float[pixels.length][3];
+        float[][] ret = new float[pixels.length][pixels[0].length];
         for( x = 0; x < width; ++x ) {
             for( y = 0; y < height; ++y ) {
                 loca = x + y * width;
@@ -115,6 +115,9 @@ public class Kernel extends MultithreadedFilter {
         return ret;
     }
     protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height) {
+        applyToPixel(out, input, x, y, loca, width, height, true);
+    }
+    protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height, boolean normalize) {
         int limitW = this.width / 2,
             limitH = this.height / 2,
                 mx, my, locb, i;
@@ -127,8 +130,9 @@ public class Kernel extends MultithreadedFilter {
                     out[i] += input[locb][i] * kv;
             }
         }
-        for( i = 0; i < out.length; ++i )
-            out[i] = normalizeValue( out[i] );
+        if( normalize )
+            for( i = 0; i < out.length; ++i )
+                out[i] = normalizeValue( out[i] );
     }
     protected float normalizeValue(float input) {
         if( Math.abs(minval - input) < 0.0001 )

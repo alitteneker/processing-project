@@ -14,6 +14,9 @@ public abstract class MultithreadedFilter extends Filter {
     // This is a stub for children to setup before running
     public void setup(float[][] pixels, int width, int height) {}
     public float[][] applyToPixels(float[][] pixels, int width, int height) {
+        return applyToPixels(pixels, width, height, true);
+    }
+    public float[][] applyToPixels(float[][] pixels, int width, int height, boolean normalize) {
         setup(pixels, width, height);
 
         ThreadGroup tg = new ThreadGroup( "FT_GROUP" + ( UID++ ) );
@@ -26,7 +29,7 @@ public abstract class MultithreadedFilter extends Filter {
         int size = height/THREAD_COUNT, i;
         for ( i = 0; i < THREAD_COUNT; ++i ) {
             threads.add(new FilterThread( this, pixels, ret, 0 , width - 1, i * size,
-                    ( THREAD_COUNT - i > 1 ? ( i + 1 ) * size : height ) - 1, width, height, "FT"+i, tg) );
+                    ( THREAD_COUNT - i > 1 ? ( i + 1 ) * size : height ) - 1, width, height, normalize, "FT"+i, tg) );
         }
  
         for( i = 0; i < threads.size(); ) {
@@ -47,28 +50,36 @@ public abstract class MultithreadedFilter extends Filter {
     protected void applyToPixel(float[] out, float[][] input, int x, int y, int width, int height) {
         applyToPixel(out, input, x, y, x + y * width, width, height);
     }
-    protected abstract void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height);
+    protected void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height) {
+        applyToPixel(out, input, x, y, loca, width, height, true);
+    }
+    protected abstract void applyToPixel(float[] out, float[][] input, int x, int y, int loca, int width, int height, boolean normalize);
     
     protected class FilterThread extends Thread {
         public MultithreadedFilter filter;
         public float[][] input;
         public float[][] out;
         public int minx, maxx, miny, maxy, width, height, iwidth;
-        public FilterThread(MultithreadedFilter filter, float[][] input, float[][] out,
-                int minx, int maxx, int miny, int maxy, int width, int height, String name, ThreadGroup group) {
+        public boolean normalize;
+        public FilterThread(MultithreadedFilter filter,
+                float[][] input, float[][] out,
+                int minx, int maxx, int miny, int maxy,
+                int width, int height,
+                boolean normalize,
+                String name, ThreadGroup group) {
             super(group, name);
-            this.filter = filter;
-            this.input = input; this.out = out;
-            this.minx = minx;   this.maxx = maxx;
-            this.miny = miny;   this.maxy = maxy;
-            this.width = width; this.height = height;
+            this.filter = filter; this.normalize = normalize;
+            this.input = input;   this.out = out;
+            this.minx = minx;     this.maxx = maxx;
+            this.miny = miny;     this.maxy = maxy;
+            this.width = width;   this.height = height;
         }
         public void run() {
             int x, y, loca;
             for( x = minx; x <= maxx; ++x )
                 for( y = miny; y <= maxy; ++y ) {
                     loca = x + y * width;
-                    filter.applyToPixel(out[loca], input, x, y, loca, width, height);
+                    filter.applyToPixel(out[loca], input, x, y, loca, width, height, normalize);
                 }
         }
     }

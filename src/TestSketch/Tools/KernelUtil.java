@@ -1,4 +1,5 @@
 package TestSketch.Tools;
+import TestSketch.Filters.FilterPipe;
 import TestSketch.Filters.Kernel;
 import TestSketch.Filters.MonochromeKernel;
 import TestSketch.Math.MathTools;
@@ -57,6 +58,13 @@ public class KernelUtil {
             data[x+limit] = scale * (float)Math.exp( -(x * x) / (2f * var) );
         return new Kernel(normalizeKernelData(data), N, 1, applet);
     }
+    public static FilterPipe buildGaussianBlurPipe(int N, float var, PApplet applet) {
+        FilterPipe ret = new FilterPipe(applet);
+        Kernel blur = buildLinearGaussianBlur(N, var, applet);
+        ret.push(blur);
+        ret.push(blur.transpose(false));
+        return ret;
+    }
     
     public static Kernel buildHighPass(boolean abs, boolean mono, PApplet applet) {
         float[][] ret = { { -1, -1, -1 }, { -1, 8, -1 }, { -1, -1, -1 } };
@@ -83,9 +91,19 @@ public class KernelUtil {
         return new MonochromeKernel[] { (MonochromeKernel)y.transpose(false), y };
     }
     public static MonochromeKernel[] buildGradientSet(PApplet applet) {
-        float[][] data = normalizeKernelData(new float[][]{{ 0, 0, 0 },{ 0, -1, 0 },{ 0, 1, 0 }});
-        MonochromeKernel y = new MonochromeKernel(data, applet);
-        return new MonochromeKernel[] { (MonochromeKernel)y.transpose(false), y };
+        float[][] data = normalizeKernelData(new float[][]{{ -1, 0, 1 }});
+        MonochromeKernel x = new MonochromeKernel(data, applet);
+        return new MonochromeKernel[] { x, (MonochromeKernel)x.transpose(false) };
+    }
+    public static MonochromeKernel[] buildNthGradientSet(int n, PApplet applet) {
+        if( n % 2 != 0 )
+            throw new IllegalArgumentException("Cannot calculate unevenly ordered derivative via this method.");
+        float[][] data = new float[1][n+1];
+        for( int i = 0; i <= n; ++i )
+            data[0][i] = ( i % 2 == 0 ? 1 : -1 ) * MathTools.choose( n, i );
+        MonochromeKernel x = new MonochromeKernel(normalizeKernelData(data), applet);
+        printKernel(x);
+        return new MonochromeKernel[] { x, (MonochromeKernel)x.transpose(false) };
     }
     
     public static Kernel combineKernels(Kernel a, Kernel b) {
