@@ -56,6 +56,9 @@ public class Vector {
             ret[i] = data[i] + b[i] * scale;
         return ret;
     }
+    public Vector add( float... add) {
+        return new Vector( addArray(add) );
+    }
     public Vector add(Vector b) {
         return new Vector( addArray( b.getData() ) );
     }

@@ -3,6 +3,11 @@ package TestSketch;
 import java.util.ArrayList;
 
 import Snakes.Snake;
+import Snakes.Methods.Continuation;
+import Snakes.Methods.GradientDescent;
+import Snakes.Methods.PSOSnake;
+import Snakes.Methods.SnakeMethod;
+import Snakes.Methods.SquareSearch;
 import TestSketch.Math.Gradient;
 import TestSketch.Math.MathTools;
 import TestSketch.Math.Vector;
@@ -18,20 +23,17 @@ public class Test extends PApplet {
     int iwidth, iheight;
     float lastx = 0, lasty = 0;
     
-    String filename = "butter apples.jpg";
+    String filename = "Gala Apple.jpg";
     boolean started = false;
 
     Gradient grad;
     Snake snake;
+    SnakeMethod method;
     ArrayList<Vector> vec;
     float min_control_dist = 5;
     
     // standard controls for snakes
-    float tau = 0.7f, roh = 0.7f, certainty = 0.2f;
-    
-    // controls for specific snakes method: continuity
-    float gamma = 0.1f, dSigma = 2f;
-    int size = 51, steps = 3;
+    float tau = 0.7f, roh = 0.7f, certainty = 1f;
 
     public void loadImage() {
         img[0] = loadImage(filename);
@@ -59,6 +61,7 @@ public class Test extends PApplet {
         // The idea here it to try to build a gradient that attracts to EDGES rather than just light or dark
         float[] lengths = ( new Gradient( img[1], KernelUtil.buildGradientSet(this) ) ).getAllLengths();
         grad = new Gradient( MathTools.minMax(lengths, 0, 30), img[1].width, img[1].height, KernelUtil.buildGradientSet(this) );
+        grad.applyFilter(KernelUtil.buildGaussianBlurPipe(11, 5, this));
         
         // The next line should be uncommented if the area inside the snake is darker than what's outside.
         grad.scale(-1);
@@ -118,11 +121,18 @@ public class Test extends PApplet {
         redraw();
     }
     public void keyPressed() {
+        // controls for specific snakes method: GDA & continuity
+        float gamma = 0.1f, dSigma = 2f;
+        int size = 51, steps = 3;
+        
         if( key == ' ' && !started ) {
             snake = new Snake(vec, grad, tau, roh, certainty);
             started = true;
-            // snake.runContinuationThread(gamma, size, dSigma, steps, this);
-            snake.runPSOThread(100, 2, 2, this);
+//            method = new GradientDescent(snake, gamma, true);
+//            method = new Continuation(snake, gamma, size, dSigma, steps, true);
+//            method = new PSOSnake(snake, 10, 2f, 2f);
+            method = new SquareSearch(snake, 10);
+            method.runThread(this);
         }
     }
 }
