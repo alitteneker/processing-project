@@ -63,4 +63,18 @@ public class MonochromeKernel extends Kernel implements MonoOperator {
         }
         return val;
     }
+    public float getPixelValue(float[] input, int x, int y, int loca, int width, int height) {
+        int mx, my, locb;
+        float kv, val = 0;
+        int limitW = this.width / 2,
+            limitH = this.height / 2;
+        for( mx = -limitW; mx <= limitW; ++mx ) {
+            for( my = -limitH; my <= limitH; ++my ) {
+                locb = MathTools.minMax(x + mx, 0, width - 1) + MathTools.minMax(y + my, 0, height - 1) * width;
+                kv = data[ limitW + mx + this.width * ( limitH + my ) ];
+                val += input[locb] * kv;
+            }
+        }
+        return val;
+    }
 }

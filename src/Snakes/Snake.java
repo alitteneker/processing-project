@@ -83,7 +83,12 @@ public class Snake {
             ret = new Vector();
         return ret;
     }
-    
+    public Vector getForceAtPosition(Vector pos) {
+        Vector ret = grad.getAt(pos.getComponent(0), pos.getComponent(1));
+        if( ret == null )
+            ret = new Vector();
+        return ret;
+    }
     public Vector getForceAtPosition(float x, float y) {
         return grad.getAt( x, y );
     }
@@ -183,20 +188,28 @@ public class Snake {
     }
     
     // get the energy of the system if we move the given control point to this new position
-    public float getScalarEnergyIf(int i, Vector pos) {
-        i = getSafeIndex(i);
+    public float getScalarEnergyIf(int replace, Vector pos) {
+        replace = getSafeIndex(replace);
+        Vector position = new Vector(pos);
         Vector sum = new Vector();
         for( int ind = 0; ind < size; ++ind )
-            sum.addEquals( ind == i ? calcEnergyIf(i, pos) : getEnergy(i) );
+            sum.addEquals( MathTools.abs( ind - replace ) < 2 ? calcEnergyIf(ind, replace, position) : getEnergy(ind) );
         return sum.getLength();
     }
-    public Vector calcEnergyIf(int i, Vector pos) {
-        i = getSafeIndex(i);
+    public Vector calcEnergyIf(int center, int replace, Vector pos) {
         Vector ret = new Vector();
         
-        ret.addEquals( alpha, getPosition(i + 1).addEquals( -1, pos ).squareEquals().multiplyEquals( 0.5f ) );
-        ret.addEquals( beta, getPosition(i - 1).addEquals( -2, pos ).addEquals( getPosition(i + 1) ).squareEquals().multiplyEquals( 0.5f ) );
-        ret.addEquals( certainty, getForceAtPosition(i).squareEquals().multiplyEquals(0.5f) );
+        center = getSafeIndex( center );
+        replace = getSafeIndex( replace );
+        
+        int left  = getSafeIndex(center - 1), right = getSafeIndex(center + 1);
+        Vector pLeft   = ( left   == replace ) ? pos : getPosition(left);
+        Vector pCenter = ( center == replace ) ? pos : getPosition(center);
+        Vector pRight  = ( right  == replace ) ? pos : getPosition(right);
+
+        ret.addEquals( alpha, pRight.addEquals( -1, pCenter ).squareEquals().multiplyEquals( 0.5f ) );
+        ret.addEquals( beta, pLeft.addEquals( -2, pCenter ).addEquals( pRight ).squareEquals().multiplyEquals( 0.5f ) );
+        ret.addEquals( certainty, getForceAtPosition(pCenter).squareEquals().multiplyEquals(0.5f) );
         
         return ret;
     }
@@ -275,7 +288,7 @@ public class Snake {
             multiplier = buildMultiplier(gamma);
 
         int iteration = 0, last_iteration = 0;
-        final int max_iterations = 100000;
+        final int max_iterations = 10000;
         float last_energy = 0;
         
         long start = System.currentTimeMillis(), time = System.currentTimeMillis();
@@ -307,7 +320,7 @@ public class Snake {
                         + " and delta_energy " + getScalarDeltaEnergy() );
                 last_iteration = iteration;
                 time = System.currentTimeMillis();
-                if( getScalarDeltaEnergy() == 0.0f || MathTools.abs(last_energy-getScalarEnergy()) == 0.0f )
+                if( getScalarDeltaEnergy() == 0.0f || MathTools.abs(last_energy-getScalarEnergy()) < 0.001f )
                     break;
                 else
                     last_energy = getScalarEnergy();
@@ -340,7 +353,7 @@ public class Snake {
                     : full_grad.applyFilter( KernelUtil.buildGaussianBlurPipe(filter_size, (steps - (1 + i)) * dSigma, applet) );
             back = null;
             
-            runGDA(gamma, true, applet);
+            runGDA(gamma, false, applet);
             
             System.out.println("Continuation step " + ( i + 1 ) + " finished in " + ( ( System.currentTimeMillis() - time ) / 1000f ) + " seconds.");
         }
@@ -356,10 +369,40 @@ public class Snake {
         inprogress.start();
     }
     
+    public void runPSO(final int p_size, final float p_i, final float p_g, final PApplet applet) {
+        int max_iterations = 1000;
+        ArrayList<ParticleSwarm> swarms = new ArrayList<ParticleSwarm>();
+        for( int iteration = 0; iteration < max_iterations; ++iteration ) {
+            long time = System.currentTimeMillis();
+            for( int j = 0; j < size; ++j )
+                swarms.add( new ParticleSwarm(p_size, this, j, p_i, p_g) );
+            for( int j = 0; j < size; ++j )
+                setPosition( j, swarms.get(j).run() );
+            System.out.println("PSO iteration "+iteration+" finished after " + ( System.currentTimeMillis() - time ) + "ms");
+            swarms.clear();
+            applet.redraw();
+        }
+    }
+    public void runPSOThread(final int p_size, final float p_i, final float p_g, final PApplet applet) {
+        running = true;
+        inprogress = new Thread() {
+            public void run() {
+                runPSO(p_size, p_i, p_g, applet);
+                running = false;
+            }
+        };
+        inprogress.start();
+    }
+    
     public void draw( int width, int height, PApplet applet ) {
-        if( back == null )
-            back = grad.toImage(applet);
-        applet.image(back, 0, 0, width, height);
+        draw( width, height, true, applet );
+    }
+    public void draw( int width, int height, boolean draw_image, PApplet applet ) {
+        if( draw_image ) {
+            if( back == null )
+                back = grad.toImage(applet);
+            applet.image(back, 0, 0, width, height);
+        }
         
         float scale_w = ((float)width)/((float)grad.getWidth()),
               scale_h = ((float)height)/((float)grad.getHeight());

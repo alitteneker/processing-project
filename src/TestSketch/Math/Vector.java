@@ -6,6 +6,12 @@ public class Vector {
     public Vector( float... set) {
         data = set;
     }
+    public Vector( Vector copy ){
+        int size = copy.getSize();
+        data = new float[copy.getSize()];
+        for(int i = 0; i < size; ++i )
+            data[i] = copy.getComponent(i);
+    }
     public Vector( int size ) {
         if( size >= 0 )
             data = new float[size];
@@ -57,7 +63,7 @@ public class Vector {
         return new Vector( addArray( b.getData(), scale ) );
     }
     public Vector addEquals(Vector b) {
-        return addEquals(1,b);
+        return addEquals(1, b);
     }
     public Vector addEquals(float scale, Vector b) {
         int size = Math.min(b.getSize(), getSize());

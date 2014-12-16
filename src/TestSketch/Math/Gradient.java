@@ -24,6 +24,10 @@ public class Gradient {
         setSize(width, height, operators.length);
         buildFromOperators(pixels, width, height, operators);
     }
+    public Gradient(float[] pixels, int width, int height, MonoOperator[] operators) {
+        setSize(width, height, operators.length);
+        buildFromOperators(pixels, width, height, operators);
+    }
     public Gradient(PImage img, MonoOperator[] operators) {
         setSize(img.width, img.height, operators.length);
         buildFromOperators(img, operators);
@@ -33,6 +37,15 @@ public class Gradient {
         return buildFromOperators(Util.getRGB(img.pixels, Util.applet), img.width, img.height, operators);
     }
     public boolean buildFromOperators(float[][] pixels, int width, int height, MonoOperator[] operators) {
+        if( this.width != width || this.height != height || this.components != operators.length )
+            return false;
+        int i,j;
+        for( i = 0; i < pixels.length; ++i )
+            for( j = 0; j < operators.length; ++j )
+                data[i][j]= operators[j].getPixelValue(pixels, i%width, i/width, i, width, height);
+        return true;
+    }
+    public boolean buildFromOperators(float[] pixels, int width, int height, MonoOperator[] operators) {
         if( this.width != width || this.height != height || this.components != operators.length )
             return false;
         int i,j;

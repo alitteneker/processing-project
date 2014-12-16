@@ -18,13 +18,20 @@ public class Test extends PApplet {
     int iwidth, iheight;
     float lastx = 0, lasty = 0;
     
+    String filename = "butter apples.jpg";
+    boolean started = false;
+
     Gradient grad;
     Snake snake;
     ArrayList<Vector> vec;
     float min_control_dist = 5;
-    float tau = 0.7f, roh = 0.7f, certainty = 1f, gamma = 0.1f;
-    String filename = "apples2.jpg";
-    boolean started = false;
+    
+    // standard controls for snakes
+    float tau = 0.7f, roh = 0.7f, certainty = 0.2f;
+    
+    // controls for specific snakes method: continuity
+    float gamma = 0.1f, dSigma = 2f;
+    int size = 51, steps = 3;
 
     public void loadImage() {
         img[0] = loadImage(filename);
@@ -47,9 +54,11 @@ public class Test extends PApplet {
         vec = new ArrayList<Vector>();
         
         loadImage();
-        img[1] = KernelUtil.buildGaussianBlur(5, 1.0f, this).apply(img[0]);
+        img[1] = KernelUtil.buildGaussianBlur( 5, 1.0f, this ).apply(img[0]);
 
-        grad = new Gradient( img[1], KernelUtil.buildGradientSet(this) );
+        // The idea here it to try to build a gradient that attracts to EDGES rather than just light or dark
+        float[] lengths = ( new Gradient( img[1], KernelUtil.buildGradientSet(this) ) ).getAllLengths();
+        grad = new Gradient( MathTools.minMax(lengths, 0, 30), img[1].width, img[1].height, KernelUtil.buildGradientSet(this) );
         
         // The next line should be uncommented if the area inside the snake is darker than what's outside.
         grad.scale(-1);
@@ -61,9 +70,9 @@ public class Test extends PApplet {
         background(0);
         iwidth = width; iheight = height;
         
-        image( img[2], 0, 0, iwidth, iheight);
+        image( img[0], 0, 0, iwidth, iheight);
         if( started )
-            snake.draw( iwidth, iheight, this);
+            snake.draw( iwidth, iheight, true, this);
         drawVertices();
     }
     public void drawVertices() {
@@ -96,7 +105,8 @@ public class Test extends PApplet {
         addVertex();
     }
     public void addVertex() {
-        iwidth = width; iheight = height;
+        iwidth  = width;
+        iheight = height;
 
         if( !started ) {
             Vector pos = new Vector(
@@ -111,7 +121,8 @@ public class Test extends PApplet {
         if( key == ' ' && !started ) {
             snake = new Snake(vec, grad, tau, roh, certainty);
             started = true;
-            snake.runContinuationThread(gamma, 51, 20f, 6, this);
+            // snake.runContinuationThread(gamma, size, dSigma, steps, this);
+            snake.runPSOThread(100, 2, 2, this);
         }
     }
 }

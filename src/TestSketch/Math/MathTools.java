@@ -124,7 +124,7 @@ public class MathTools {
     public static float[] minMax(float[] val, float min, float max) {
         float[] ret = new float[val.length];
         for( int i = 0; i < val.length; ++i )
-            ret[i] = minMax(val[i],min, max);
+            ret[i] = minMax(val[i], min, max);
         return ret;
     }
 
@@ -215,7 +215,8 @@ public class MathTools {
         return point;
     }
     public static Vector randomVector(float len) {
-        return new Vector( len * (float)( Math.random() - 0.5 ) * 2, len * (float)( Math.random() - 0.5 ) * 2 );
+        float angle = ((float)Math.random()) * 2 * ((float)Math.PI);
+        return new Vector( len * cos(angle), len * sin(angle) );
     }
     public static int choose(int n, int k) {
         if( n == 0 || n == k )
