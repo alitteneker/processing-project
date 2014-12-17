@@ -113,7 +113,7 @@ public class Test extends PApplet {
 
         if( !started ) {
             Vector pos = new Vector(
-                    MathTools.normalize(mouseX, 0, iwidth, 0, img[2].width),
+                    MathTools.normalize(mouseX, 0, iwidth,  0, img[2].width),
                     MathTools.normalize(mouseY, 0, iheight, 0, img[2].height) );
             if( vec.size() == 0 || MathTools.distance( pos, vec.get(vec.size()-1) ) >= min_control_dist )
                 vec.add(pos);
@@ -125,13 +125,13 @@ public class Test extends PApplet {
         float gamma = 0.1f, dSigma = 2f;
         int size = 51, steps = 3;
         
-        if( key == ' ' && !started ) {
+        if( key == ' ' && !started && vec.size() > 2 ) {
             snake = new Snake(vec, grad, tau, roh, certainty);
             started = true;
 //            method = new GradientDescent(snake, gamma, true);
-//            method = new Continuation(snake, gamma, size, dSigma, steps, true);
+            method = new Continuation(snake, new GradientDescent(snake, gamma, true), size, dSigma, steps, true);
 //            method = new PSOSnake(snake, 10, 2f, 2f);
-            method = new SquareSearch(snake, 10);
+//            method = new SquareSearch(snake, 10);
             method.runThread(this);
         }
     }

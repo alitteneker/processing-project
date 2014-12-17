@@ -9,7 +9,7 @@ public class PSOSnake extends SnakeMethod {
     int p_size;
     float p_i, p_g;
     public PSOSnake(Snake sn, int p_size, float p_i, float p_g) {
-        snake = sn;
+        super(sn);
         this.p_size = p_size;
         this.p_i = p_i;
         this.p_g = p_g;

@@ -7,7 +7,7 @@ import TestSketch.Math.Vector;
 public class SquareSearch extends SnakeMethod {
     int s_size;
     public SquareSearch(Snake sn, int size) {
-        snake = sn;
+        super(sn);
         s_size = size;
     }
     public void runMethod(PApplet applet) {

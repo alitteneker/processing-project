@@ -11,7 +11,7 @@ public class GradientDescent extends SnakeMethod {
     boolean silent = false;
     
     public GradientDescent(Snake sn, float gam, boolean sil) {
-        snake = sn;
+        super(sn);
         gamma = gam;
         silent = sil;
     }

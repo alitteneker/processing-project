@@ -5,6 +5,9 @@ import processing.core.PApplet;
 
 public abstract class SnakeMethod {
     Snake snake;
+    public SnakeMethod(Snake sn) {
+        snake = sn;
+    }
     public abstract void runMethod(PApplet applet);
     public void runThread(final PApplet applet) {
         snake.running = true;
@@ -12,6 +15,7 @@ public abstract class SnakeMethod {
             public void run() {
                 runMethod(applet);
                 snake.running = false;
+                applet.redraw();
             }
         };
         snake.inprogress.start();

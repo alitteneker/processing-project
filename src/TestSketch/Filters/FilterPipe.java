@@ -8,6 +8,7 @@ public class FilterPipe extends Filter {
     protected ArrayList<Filter> queue = new ArrayList<Filter>();
     protected PApplet applet;
     protected boolean compressed = false;
+    protected boolean debug = false;
     
     public FilterPipe(PApplet applet) {
         super(applet);
@@ -82,7 +83,8 @@ public class FilterPipe extends Filter {
         float[][] ret = pixels.clone();
         for( int i = 0; i < size(); ++i )
             ret = get(i).applyToPixels(ret, width, height, normalize);
-        System.out.println("Filter Pipe Time: " + ( System.currentTimeMillis() - time ));
+        if( debug )
+            System.out.println("Filter Pipe Time: " + ( System.currentTimeMillis() - time ));
         return ret;
     }
 }
