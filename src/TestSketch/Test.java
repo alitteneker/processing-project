@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import Snakes.Snake;
 import Snakes.Methods.Continuation;
 import Snakes.Methods.GradientDescent;
-import Snakes.Methods.PSOSnake;
+import Snakes.Methods.PointPSO;
 import Snakes.Methods.SnakeMethod;
 import Snakes.Methods.SquareSearch;
 import TestSketch.Math.Gradient;
@@ -23,17 +23,18 @@ public class Test extends PApplet {
     int iwidth, iheight;
     float lastx = 0, lasty = 0;
     
-    String filename = "Gala Apple.jpg";
+    String filename = "maple leaf.jpg";
     boolean started = false;
 
     Gradient grad;
     Snake snake;
     SnakeMethod method;
     ArrayList<Vector> vec;
-    float min_control_dist = 5;
+    float min_control_dist = 2;
     
     // standard controls for snakes
-    float tau = 0.7f, roh = 0.7f, certainty = 1f;
+    final float grad_cap = 10f;
+    final float tau = 0.7f, roh = 0.7f, certainty = 3f;
 
     public void loadImage() {
         img[0] = loadImage(filename);
@@ -60,7 +61,7 @@ public class Test extends PApplet {
 
         // The idea here it to try to build a gradient that attracts to EDGES rather than just light or dark
         float[] lengths = ( new Gradient( img[1], KernelUtil.buildGradientSet(this) ) ).getAllLengths();
-        grad = new Gradient( MathTools.minMax(lengths, 0, 30), img[1].width, img[1].height, KernelUtil.buildGradientSet(this) );
+        grad = new Gradient( MathTools.minMax(lengths, 0, grad_cap), img[1].width, img[1].height, KernelUtil.buildGradientSet(this) );
         grad.applyFilter(KernelUtil.buildGaussianBlurPipe(11, 5, this));
         
         // The next line should be uncommented if the area inside the snake is darker than what's outside.
@@ -122,7 +123,7 @@ public class Test extends PApplet {
     }
     public void keyPressed() {
         // controls for specific snakes method: GDA & continuity
-        float gamma = 0.1f, dSigma = 2f;
+        float gamma = 0.05f, dSigma = 2f;
         int size = 51, steps = 3;
         
         if( key == ' ' && !started && vec.size() > 2 ) {
@@ -130,8 +131,8 @@ public class Test extends PApplet {
             started = true;
 //            method = new GradientDescent(snake, gamma, true);
             method = new Continuation(snake, new GradientDescent(snake, gamma, true), size, dSigma, steps, true);
-//            method = new PSOSnake(snake, 10, 2f, 2f);
-//            method = new SquareSearch(snake, 10);
+//            method = new Continuation(snake, new PointPSO(snake, 15, 2f, 2f), size, dSigma, steps, true);
+//            method = new Continuation(snake, new SquareSearch(snake, 20), size, dSigma, steps, true);
             method.runThread(this);
         }
     }

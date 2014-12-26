@@ -283,13 +283,22 @@ public class MathTools {
     public static float cos(float theta) {
         return (float)Math.cos(theta);
     }
-    public static float atan2(float x, float y) {
-        return (float)Math.atan2(x, y);
+    public static float atan2(float y, float x) {
+        return (float)Math.atan2(y, x);
+    }
+    public static float atan2( Vector pos ) {
+        return atan2( pos.getComponent(1), pos.getComponent(0) );
     }
     public static float[] polarToCartesian(float r, float theta) {
         return new float[] { r * sin(theta), r * cos(theta) };
     }
+    public static Vector polarToCartesianVector(float r, float theta) {
+        return new Vector( r * sin(theta), r * cos(theta) );
+    }
     public static float[] cartesianToPolar(float x, float y) {
-        return new float[] { distance(x, y), atan2(x, y) };
+        return new float[] { distance(x, y), atan2(y, x) };
+    }
+    public static Vector cartesianToPolarVector(float x, float y) {
+        return new Vector( distance(x, y), atan2(y, x) );
     }
 }

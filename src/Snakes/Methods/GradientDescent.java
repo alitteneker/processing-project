@@ -9,6 +9,7 @@ import TestSketch.Math.Matrix.Matrix;
 public class GradientDescent extends SnakeMethod {
     float gamma;
     boolean silent = false;
+    final float zero_threshold = 0.0001f;
     
     public GradientDescent(Snake sn, float gam, boolean sil) {
         super(sn);
@@ -95,7 +96,7 @@ public class GradientDescent extends SnakeMethod {
                         + " and delta_energy " + snake.getScalarDeltaEnergy() );
                 last_iteration = iteration;
                 time = System.currentTimeMillis();
-                if( snake.getScalarDeltaEnergy() == 0.0f || MathTools.abs(last_energy-snake.getScalarEnergy()) < 0.001f )
+                if( snake.getScalarDeltaEnergy() == 0.0f || MathTools.abs(last_energy-snake.getScalarEnergy()) < zero_threshold )
                     break;
                 else
                     last_energy = snake.getScalarEnergy();

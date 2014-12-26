@@ -1,50 +1,38 @@
-package Snakes.Methods;
+package TestSketch.Math;
 
 import java.util.ArrayList;
 import java.util.Random;
 
-import Snakes.Snake;
-import TestSketch.Math.MathTools;
-import TestSketch.Math.Vector;
-
-public class ParticleSwarm {
+public abstract class ParticleSwarm {
     public ArrayList<Particle> particles = new ArrayList<Particle>();
-    Vector initial, g_best_pos, neighbor_left, neighbor_right;
-    int index;
-    float phi_individual, phi_global, clip_threshold = 5, g_best;
-    Random gen = new Random();
-    Snake snake;
-    boolean disable_clipping = true;
+    public Vector g_best_pos;
+    public float phi_individual, phi_global, g_best;
+    public Random gen = new Random();
+    public boolean disable_clipping = true;
+    public int size;
     
-    public ParticleSwarm(int size, Snake sn, int ind, float p_i, float p_g) {
-        snake = sn;
-        index = ind;
-        initial = snake.getPosition(index);
-        neighbor_left  = snake.getPosition(index - 1);
-        neighbor_right = snake.getPosition(index + 1);
+    public ParticleSwarm(int s, float p_i, float p_g) {
+        size = s;
         phi_individual = p_i;
         phi_global = p_g;
-        
-        g_best_pos = initial;
-        g_best = snake.getScalarEnergy();
-        
-        float initial_velocity_range = 1;
-        for( int i = 0; i < size; ++i )
-            particles.add( new Particle( initial, MathTools.randomVector(initial_velocity_range), g_best, this ) );
     }
-    public boolean insideRange(Vector check) {
-        if( disable_clipping )
-            return true;
-        float d1 = MathTools.distance(neighbor_left, check),
-              d2 = MathTools.distance(neighbor_right, check);
-        if( MathTools.abs(d1 - d2) > clip_threshold )
-            return false;
-        return true;
-    }
-    public float evaluateFitness(Vector pos) {
-        return snake.getScalarEnergyIf(index, pos);
-    }
+    
+    public abstract void initialize();
+    public abstract Particle buildParticle(int index);
+    public abstract boolean insideRange(Vector check);
+    public abstract float evaluateFitness(Vector pos);
+
     public Vector run() {
+
+        g_best_pos = new Vector();
+        g_best = Float.POSITIVE_INFINITY;
+
+        initialize();
+
+        particles.clear();
+        for( int i = 0; i < size; ++i )
+            particles.add( buildParticle(i) );
+
         int time_since_change = 0;
         int size = particles.size();
         while( time_since_change < 10 ) {
@@ -58,6 +46,7 @@ public class ParticleSwarm {
                 }
             }
         }
+
         return g_best_pos;
     }
     
@@ -68,30 +57,38 @@ public class ParticleSwarm {
         
         public Particle(Vector s_p, Vector s_v, float start_fit, ParticleSwarm par) {
             pos = new Vector(s_p);
-            vel = s_v;
-            fitness = start_fit;
-            p_best = start_fit;
+            vel = new Vector(s_v);
             p_best_pos = new Vector(s_p);
+            p_best = start_fit;
+            fitness = start_fit;
             parent = par;
         }
         public float move() {
+            
             Vector accel = getRandAccel();
             vel.addEquals( accel );
+            
             Vector newpos = pos.add( vel );
+            
             if( parent.insideRange(newpos) ) {
                 pos = newpos;
                 fitness = parent.evaluateFitness(pos);
             }
+            
             if( fitness < p_best ) {
                 p_best = fitness;
                 p_best_pos = new Vector(pos);
             }
+            
             return fitness;
         }
         public Vector getRandAccel() {
+            
             Vector ret = new Vector();
+            
             ret.addEquals( gen.nextFloat() * phi_individual, p_best_pos.add(-1, pos) );
             ret.addEquals( gen.nextFloat() * phi_global,     g_best_pos.add(-1, pos) );
+            
             return ret;
         }
     }
