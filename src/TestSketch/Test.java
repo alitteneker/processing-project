@@ -20,12 +20,13 @@ public class Test extends PApplet {
 
     private static final long serialVersionUID = 1L;
 
-    PImage[] img = new PImage[3];
+    PImage[] img = new PImage[4];
     int iwidth, iheight;
     float lastx = 0, lasty = 0;
     
     String filename = "maple leaf.jpg";
     boolean started = false;
+    int saved = 1;
 
     Gradient grad;
     Snake snake;
@@ -35,7 +36,7 @@ public class Test extends PApplet {
     
     // standard controls for snakes
     final float grad_cap = 10f;
-    final float tau = 0.7f, roh = 0.7f, certainty = 1f;
+    final float tau = 0.7f, roh = 0.7f, certainty = 2f;
 
     public void loadImage() {
         img[0] = loadImage(filename);
@@ -61,7 +62,8 @@ public class Test extends PApplet {
         img[1] = KernelUtil.buildGaussianBlur( 5, 1.0f, this ).apply(img[0]);
 
         // The idea here it to try to build a gradient that attracts to EDGES rather than just light or dark
-        float[] lengths = ( new Gradient( img[1], KernelUtil.buildGradientSet(this) ) ).getAllLengths();
+        Gradient original = new Gradient( img[1], KernelUtil.buildGradientSet(this) );
+        float[] lengths = original.getAllLengths();
         grad = new Gradient( MathTools.minMax(lengths, 0, grad_cap), img[1].width, img[1].height, KernelUtil.buildGradientSet(this) );
         grad.applyFilter(KernelUtil.buildGaussianBlurPipe(11, 5, this));
         
@@ -69,6 +71,7 @@ public class Test extends PApplet {
         grad.scale(-1);
         
         img[2] = grad.toImage(this);
+        img[3] = original.toImage(this);
     }
 
     public void draw() {
@@ -76,7 +79,7 @@ public class Test extends PApplet {
         iwidth = width; iheight = height;
         
         image( img[0], 0, 0, iwidth, iheight);
-        if( started )
+        if( snake != null )
             snake.draw( iwidth, iheight, true, this);
         drawVertices();
     }
@@ -123,19 +126,40 @@ public class Test extends PApplet {
         redraw();
     }
     public void keyPressed() {
+        if( key == ' ' && !started && vec.size() > 2 ) {
+            started = true;
+            startMethod("GDAPSO");
+        }
+    }
+    
+    public void startMethod(String select) {
         // controls for specific snakes method: GDA & continuity
         float gamma = 0.05f, dSigma = 2f;
         int size = 51, steps = 3;
         
-        if( key == ' ' && !started && vec.size() > 2 ) {
-            snake = new Snake(vec, grad, tau, roh, certainty);
-            started = true;
-//            method = new GradientDescent(snake, gamma, true);
-//            method = new Continuation(snake, new GradientDescent(snake, gamma, true), size, dSigma, steps, true);
-//            method = new Continuation(snake, new PointPSO(snake, 15, 2f, 2f), size, dSigma, steps, true);
-//            method = new Continuation(snake, new SquareSearch(snake, 20), size, dSigma, steps, true);
-            method = new Continuation(snake, new GradientDescentPSO(2*gamma, 40, 2f, 2f, snake), size, dSigma, steps, true);
-            method.runThread(this);
+        snake = new Snake(vec, grad, tau, roh, certainty);
+        method = null;
+        switch(select) {
+            case "GDA":
+                method = new GradientDescent(snake, gamma, true);
+                break;
+            case "CGDA":
+                method = new Continuation(snake, new GradientDescent(snake, gamma, true), size, dSigma, steps, true);
+                break;
+            case "CPSO":
+                method = new Continuation(snake, new PointPSO(snake, 15, 2f, 2f), size, dSigma, steps, true);
+                break;
+            case "CSS":
+                method = new Continuation(snake, new SquareSearch(snake, 20), size, dSigma, steps, true);
+                break;
+            case "GDAPSO":
+                method = new GradientDescentPSO(2*gamma, 40, 2f, 2f, snake);
+                break;
+            case "CGDAPSO":
+                method = new Continuation(snake, new GradientDescentPSO(2*gamma, 40, 2f, 2f, snake), size, dSigma, steps, true);
+                break;
         }
+        if( method != null )
+            method.runThread(this);
     }
 }

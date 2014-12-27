@@ -36,7 +36,7 @@ public class GradientDescentPSO extends SnakeMethod {
             if( !silent )
             System.out.println("Gamma PSO iteration "+iteration+" took "+(System.currentTimeMillis()-start)+" ms with dEnergy "+(last_energy-next_energy));
 
-            if( MathTools.abs( last_energy - next_energy ) < 0.00001f )
+            if( MathTools.abs( last_energy - next_energy ) < 0.0001f )
                 break;
         }
     }
