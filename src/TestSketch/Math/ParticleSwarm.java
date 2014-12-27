@@ -10,6 +10,7 @@ public abstract class ParticleSwarm {
     public Random gen = new Random();
     public boolean disable_clipping = true;
     public int size;
+    public int stabilization_threshold = 10;
     
     public ParticleSwarm(int s, float p_i, float p_g) {
         size = s;
@@ -35,7 +36,7 @@ public abstract class ParticleSwarm {
 
         int time_since_change = 0;
         int size = particles.size();
-        while( time_since_change < 10 ) {
+        while( time_since_change < stabilization_threshold ) {
             ++time_since_change;
             for( int i = 0; i < size; ++i ) {
                 Particle a = particles.get(i);

@@ -1,29 +1,36 @@
 package TestSketch.Math;
 
+import TestSketch.Math.Matrix.Matrix;
+
 public class Vector {
     protected float[] data;
     
+    public Vector( int size ) {
+        if( size < 0 )
+            throw new IllegalArgumentException("Cannot have a negatively dimensional space.");
+        data = new float[size];
+    }
+
+    // default to (X,Y)
+    public Vector() {
+        this(2);
+    }
+
     public Vector( float... set) {
         data = set;
     }
+
     public Vector( Vector copy ){
         int size = copy.getSize();
         data = new float[copy.getSize()];
         for(int i = 0; i < size; ++i )
             data[i] = copy.getComponent(i);
     }
-    public Vector( int size ) {
-        if( size >= 0 )
-            data = new float[size];
-    }
-    // default to (X,Y)
-    public Vector() {
-        this(2);
-    }
-    
+
     public int getSize() {
         return data.length;
     }
+
     public float getComponent( int comp ) {
         if( comp < getSize() && comp >= 0 )
             return data[comp];
@@ -35,12 +42,15 @@ public class Vector {
         data[comp] = val;
         return true;
     }
+
     public float[] getData() {
         return data;
     }
+
     public void setData( float[] data ) {
         this.data = data;
     }
+
     public void setData( float data ) {
         for( int i = 0; i < this.data.length; ++i )
             this.data[i] = data;
@@ -49,6 +59,7 @@ public class Vector {
     public float[] addArray(float[] b) {
         return addArray(b, 1);
     }
+
     public float[] addArray(float[] b, float scale) {
         int size = Math.min(b.length, getSize());
         float[] ret = new float[size];
@@ -56,18 +67,23 @@ public class Vector {
             ret[i] = data[i] + b[i] * scale;
         return ret;
     }
+
     public Vector add( float... add) {
         return new Vector( addArray(add) );
     }
+
     public Vector add(Vector b) {
         return new Vector( addArray( b.getData() ) );
     }
+
     public Vector add(float scale, Vector b) {
         return new Vector( addArray( b.getData(), scale ) );
     }
+
     public Vector addEquals(Vector b) {
         return addEquals(1, b);
     }
+
     public Vector addEquals(float scale, Vector b) {
         int size = Math.min(b.getSize(), getSize());
         for( int i = 0; i < size; ++i )
@@ -81,9 +97,11 @@ public class Vector {
             ret[i] = this.data[i] * s;
         return ret;
     }
+
     public Vector multiply(float s) {
         return new Vector(multiplyArray(s));
     }
+
     public Vector multiplyEquals(float s) {
         for( int i = 0; i < this.data.length; ++i )
             this.data[i] *= s;
@@ -96,6 +114,7 @@ public class Vector {
             data[i] = this.data[i] * this.data[i];
         return new Vector(data);
     }
+
     public Vector squareEquals() {
         for( int i = 0; i < data.length; ++i )
             data[i] *= data[i];
@@ -108,6 +127,14 @@ public class Vector {
     
     public float getLength() {
         return MathTools.length(data);
+    }
+    
+    public Matrix toMatrix() {
+        return new Matrix( data, 1, getSize() );
+    }
+    
+    public Matrix multiply(Matrix other) {
+        return toMatrix().multiply( other );
     }
     
     public void printVector() {

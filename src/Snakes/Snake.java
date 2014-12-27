@@ -91,13 +91,15 @@ public class Snake {
     public Vector getForceAtPosition(float x, float y) {
         return grad.getAt( x, y );
     }
-    
-    public int getSafeIndex(int i) {
+    public int getSafeIndex(int i, int size) {
         while( i < 0 )
             i += size;
         while( i >= size )
             i -= size;
         return i;
+    }
+    public int getSafeIndex(int i) {
+        return getSafeIndex(i, size);
     }
     
     public Vector getPosition(int i) {
@@ -130,6 +132,52 @@ public class Snake {
             if( pos.getComponent(1) < 0 || pos.getComponent(1) > height )
                 positions.setValue( MathTools.minMax( pos.getComponent(1), 0, height ), 1, i);
         }
+    }
+    
+    public void followGradientDescent(float gamma) {
+        if( gamma < 0 )
+            throw new IllegalArgumentException("Cannot use gamma of less than 0.");
+        for( int i = 0; i < size; ++i ) {
+            Vector delt = getDeltaEnergy(i).multiplyEquals( -gamma );
+            setPosition( i, getPosition(i).addEquals(delt), false );
+        }
+        clipPositions();
+        updateAllForces();
+        updateAllEnergy();
+    }
+
+    public void followGradientDescent(Vector gammas) {
+        if( gammas.getSize() < size )
+            throw new IllegalArgumentException("Not enough gamma values.");
+        for( int i = 0; i < size; ++i ) {
+            float gamma = gammas.getComponent(i);
+            if( gamma < 0 )
+                throw new IllegalArgumentException("Cannot use gamma of less than 0.");
+            Vector delt = getDeltaEnergy(i).multiplyEquals( -gamma );
+            setPosition( i, getPosition(i).addEquals(delt), false );
+        }
+        clipPositions();
+        updateAllForces();
+        updateAllEnergy();
+    }
+    
+    public float calcScalarEnergyIfDescendedBy(Vector gammas) {
+        if( gammas.getSize() < size )
+            throw new IllegalArgumentException("Not enough gamma values provided.");
+
+        Matrix new_positions = new Matrix(2, size);
+
+        for( int i = 0; i < size; ++i ) {
+            float gamma = gammas.getComponent(i);
+            if( gamma < 0 )
+                throw new IllegalArgumentException("Cannot use gamma of less than 0.");
+            Vector delt = getDeltaEnergy(i).multiplyEquals(gamma);
+            Vector new_pos = getPosition(i).addEquals(delt);
+            new_positions.setValue(new_pos.getComponent(0), 0, i);
+            new_positions.setValue(new_pos.getComponent(1), 1, i);
+        }
+        
+        return getScalarEnergyIf(new_positions);
     }
     
     public void updateAllEnergy() {
@@ -189,6 +237,22 @@ public class Snake {
         return ret;
     }
     
+    public float getScalarEnergyIf(Matrix positions) {
+        Vector left, center, right, ret = new Vector();
+        int size = positions.getWidth();
+        
+        center = new Vector( positions.getValue(0, size - 2), positions.getValue(1, size - 2) );
+        right = new Vector( positions.getValue(0, size - 1), positions.getValue(1, size - 1) );
+        
+        for( int i = 0; i < positions.getWidth(); ++i ) {
+            left = center;
+            center = right;
+            right = new Vector( positions.getValue(0, i), positions.getValue(1, i) );
+            ret.addEquals( calcEnergyIf(left, center, right) );
+        }
+        return ret.getLength();
+    }
+    
     // get the energy of the system if we move the given control point to this new position
     public float getScalarEnergyIf(int replace, Vector pos) {
         replace = getSafeIndex(replace);
@@ -199,7 +263,6 @@ public class Snake {
         return sum.getLength();
     }
     public Vector calcEnergyIf(int center, int replace, Vector pos) {
-        Vector ret = new Vector();
         
         center = getSafeIndex( center );
         replace = getSafeIndex( replace );
@@ -209,9 +272,15 @@ public class Snake {
         Vector pCenter = ( center == replace ) ? pos : getPosition(center);
         Vector pRight  = ( right  == replace ) ? pos : getPosition(right);
 
+        return calcEnergyIf(pLeft, pCenter, pRight);
+    }
+    
+    public Vector calcEnergyIf(Vector pLeft, Vector pCenter, Vector pRight) {
+        Vector ret = new Vector();
+        
         ret.addEquals( alpha, pRight.add( -1, pCenter ).squareEquals().multiplyEquals( 0.5f ) );
         ret.addEquals( beta, pLeft.add( -2, pCenter ).addEquals( pRight ).squareEquals().multiplyEquals( 0.5f ) );
-        ret.addEquals( certainty, getForceAtPosition(pCenter).squareEquals().multiplyEquals(0.5f) );
+        ret.addEquals( certainty, getForceAtPosition( pCenter ).squareEquals().multiplyEquals(0.5f) );
         
         return ret;
     }
@@ -236,6 +305,31 @@ public class Snake {
         ret.addEquals( alpha, getPosition(i-1).addEquals(-2,getPosition(i)).addEquals(getPosition(i+1)).multiplyEquals(-1) );
         ret.addEquals( beta, getPosition(i-2).addEquals(-4,getPosition(i-1)).addEquals(6,getPosition(i)).addEquals(-4,getPosition(i+1)).addEquals(getPosition(i+2)) );
         ret.addEquals( certainty, getForceAtPosition(i) );
+        
+        return ret;
+    }
+    public Vector calcDeltaEnergyIf(Matrix positions, int index) {
+        int size = positions.getWidth(),
+            iLL = getSafeIndex(index - 2, size),
+            iL  = getSafeIndex(index - 1, size),
+            iC  = getSafeIndex(index,     size),
+            iR  = getSafeIndex(index + 1, size),
+            iRR = getSafeIndex(index + 2, size);
+        
+        Vector pLL = new Vector(positions.getValue(0, iLL), positions.getValue(1, iLL));
+        Vector pL  = new Vector(positions.getValue(0, iL ), positions.getValue(1, iL ));
+        Vector pC  = new Vector(positions.getValue(0, iC ), positions.getValue(1, iC ));
+        Vector pR  = new Vector(positions.getValue(0, iR ), positions.getValue(1, iR ));
+        Vector pRR = new Vector(positions.getValue(0, iRR), positions.getValue(1, iRR));
+
+        return calcDeltaEnergyIf(pLL, pL, pC, pR, pRR);
+    }
+    public Vector calcDeltaEnergyIf(Vector pLL, Vector pL, Vector pC, Vector pR, Vector pRR) {
+        Vector ret = new Vector();
+        
+        ret.addEquals( alpha, pL.add( -2, pC ).addEquals( pR ).multiplyEquals( -1 ) );
+        ret.addEquals( beta, pLL.add( -4, pL ).addEquals( 6, pC ).addEquals( -4, pR ).addEquals( pRR ) );
+        ret.addEquals( certainty, pC );
         
         return ret;
     }

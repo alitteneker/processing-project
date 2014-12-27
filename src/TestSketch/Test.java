@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import Snakes.Snake;
 import Snakes.Methods.Continuation;
 import Snakes.Methods.GradientDescent;
+import Snakes.Methods.GradientDescentPSO;
 import Snakes.Methods.PointPSO;
 import Snakes.Methods.SnakeMethod;
 import Snakes.Methods.SquareSearch;
@@ -34,7 +35,7 @@ public class Test extends PApplet {
     
     // standard controls for snakes
     final float grad_cap = 10f;
-    final float tau = 0.7f, roh = 0.7f, certainty = 3f;
+    final float tau = 0.7f, roh = 0.7f, certainty = 1f;
 
     public void loadImage() {
         img[0] = loadImage(filename);
@@ -130,9 +131,10 @@ public class Test extends PApplet {
             snake = new Snake(vec, grad, tau, roh, certainty);
             started = true;
 //            method = new GradientDescent(snake, gamma, true);
-            method = new Continuation(snake, new GradientDescent(snake, gamma, true), size, dSigma, steps, true);
+//            method = new Continuation(snake, new GradientDescent(snake, gamma, true), size, dSigma, steps, true);
 //            method = new Continuation(snake, new PointPSO(snake, 15, 2f, 2f), size, dSigma, steps, true);
 //            method = new Continuation(snake, new SquareSearch(snake, 20), size, dSigma, steps, true);
+            method = new Continuation(snake, new GradientDescentPSO(2*gamma, 40, 2f, 2f, snake), size, dSigma, steps, true);
             method.runThread(this);
         }
     }

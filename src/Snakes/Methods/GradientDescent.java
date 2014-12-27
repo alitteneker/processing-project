@@ -3,7 +3,6 @@ package Snakes.Methods;
 import processing.core.PApplet;
 import Snakes.Snake;
 import TestSketch.Math.MathTools;
-import TestSketch.Math.Vector;
 import TestSketch.Math.Matrix.Matrix;
 
 public class GradientDescent extends SnakeMethod {
@@ -74,17 +73,14 @@ public class GradientDescent extends SnakeMethod {
 
         while( iteration < max_iterations ) {
 
-            if( use_matrix )
+            if( use_matrix ) {
                 snake.positions.addEquals(snake.forces.multiply(gamma * snake.certainty)).multiplyEquals(multiplier);
+                snake.clipPositions();
+                snake.updateAllForces();
+                snake.updateAllEnergy();
+            }
             else
-                for( int i = 0; i < snake.size; ++i ) {
-                    Vector delt = snake.getDeltaEnergy(i).multiplyEquals( -gamma );
-                    snake.setPosition( i, snake.getPosition(i).addEquals(delt), false );
-                }
-
-            snake.clipPositions();
-            snake.updateAllForces();
-            snake.updateAllEnergy();
+                snake.followGradientDescent(gamma);
             
             iteration++;
             if( System.currentTimeMillis() - time > 40 ) {

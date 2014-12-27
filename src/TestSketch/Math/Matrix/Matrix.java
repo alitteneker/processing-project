@@ -1,12 +1,16 @@
 package TestSketch.Math.Matrix;
 
 import TestSketch.Math.MathTools;
+import TestSketch.Math.Vector;
 
 public class Matrix {
     protected float[] data;
     protected int width, height;
-    
+
     public Matrix() { }
+    public Matrix(Matrix other) {
+        setData(other.data, width, height);
+    }
     public Matrix(float[] data, int width, int height) {
         setData(data, width, height);
     }
@@ -214,23 +218,45 @@ public class Matrix {
             throw new IllegalArgumentException("Matrices are not of compatible sizes.");
         int newWidth = other.getWidth(), newHeight = getHeight(), comps = getWidth();
         float[] data = new float[ newWidth * newHeight ];
-        for( int i = 0; i < newHeight; ++i )
-            for( int j = 0; j < comps; ++j )
-                for( int b = 0; b < newWidth; ++b )
-                    data[ b + i * newWidth ] += getValue(i, j) * other.getValue(j, b);
+        for( int i = 0; i < newHeight; ++i ) {
+            for( int j = 0; j < comps; ++j ) {
+                float vala = getValue(i, j);
+                if( MathTools.abs(vala) < 0.00001f )
+                    continue;
+                for( int b = 0; b < newWidth; ++b ) {
+                    float valb = other.getValue(j, b);
+                    if( MathTools.abs(valb) > 0.000001f )
+                        data[  b + i * newWidth ] += vala * valb;
+                }
+            }
+        }
         return new Matrix(data, newWidth, newHeight);
+    }
+    public Matrix multiply(Vector other) {
+        return multiply(other.toMatrix());
     }
     public Matrix multiplyEquals(Matrix other) {
         if( getWidth() != other.getHeight() )
             throw new IllegalArgumentException("Matrices are not of compatible sizes.");
         int newWidth = other.getWidth(), newHeight = getHeight(), comps = getWidth();
         float[] data = new float[ newWidth * newHeight ];
-        for( int i = 0; i < newHeight; ++i )
-            for( int j = 0; j < comps; ++j )
-                for( int b = 0; b < newWidth; ++b )
-                    data[  b + i * newWidth ] += getValue(i, j) * other.getValue(j, b);
+        for( int i = 0; i < newHeight; ++i ) {
+            for( int j = 0; j < comps; ++j ) {
+                float vala = getValue(i, j);
+                if( MathTools.abs(vala) < 0.000001f )
+                    continue;
+                for( int b = 0; b < newWidth; ++b ) {
+                    float valb = other.getValue(j, b);
+                    if( MathTools.abs(valb) > 0.000001f )
+                        data[  b + i * newWidth ] += vala * valb;
+                }
+            }
+        }
         setData(data, newWidth, newHeight);
         return this;
+    }
+    public Matrix multiplyEquals(Vector other) {
+        return multiplyEquals(other.toMatrix());
     }
     public Matrix add(Matrix other) {
         int width = getWidth(), height = getHeight();
@@ -292,8 +318,8 @@ public class Matrix {
                     int limit = b + MathTools.abs(a - b);
                     for( int k = b; k < limit; ++k )
                         calc -= isUpper ? ( getValue(k, a) * ret.getValue(b, k) ) : ( getValue(a, k) * ret.getValue(k, b) );
-                    calc /= getValue(a, a);
-                    ret.setValue(calc, i, j);
+                        calc /= getValue(a, a);
+                        ret.setValue(calc, i, j);
                 }
             }
         }
@@ -318,8 +344,8 @@ public class Matrix {
                     int limit = b + MathTools.abs(a - b);
                     for( int k = b; k < limit; ++k )
                         calc -= isUpper ? ( getValue(k, a) * newData[getSafeIndex(k, b)] ) : ( getValue(a, k) * newData[getSafeIndex(k, b)] );
-                    calc /= getValue(a, a);
-                    data[getSafeIndex(i,j)] = calc;
+                        calc /= getValue(a, a);
+                        data[getSafeIndex(i,j)] = calc;
                 }
             }
         }
