@@ -6,4 +6,4 @@ This includes, among others, a set of convolution tools, gradient calculation/op
 
 Currently, the application this produces is not interactive beyond the setting of vertices on the initial image. Look into the TestSketch/Test.java file for more information on modifying the parameters of the simulation.
 
-To view a report on the status of the work done for this project thus far, select the ProjectReport.pdf file.
+To view a report on the status of the work done for this project thus far, view the 'Experiments in Particle Swarm Optimizations with Active Contour Models' file.
